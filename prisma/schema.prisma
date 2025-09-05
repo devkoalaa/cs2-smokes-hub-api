@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  steamId   String   @unique
+  username  String
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  smokes  Smoke[]
+  ratings Rating[]
+  reports Report[]
+
+  @@map("users")
+}
+
+model Map {
+  id       Int    @id @default(autoincrement())
+  name     String @unique
+  imageUrl String
+
+  smokes Smoke[]
+
+  @@map("maps")
+}
+
+model Smoke {
+  id        Int      @id @default(autoincrement())
+  title     String
+  videoUrl  String
+  timestamp Int
+  x_coord   Float
+  y_coord   Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  authorId Int
+  author   User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  mapId Int
+  map   Map @relation(fields: [mapId], references: [id], onDelete: Cascade)
+
+  ratings Rating[]
+  reports Report[]
+
+  @@map("smokes")
+}
+
+model Rating {
+  id    Int @id @default(autoincrement())
+  value Int // 1 for upvote, -1 for downvote
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  smokeId Int
+  smoke   Smoke @relation(fields: [smokeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, smokeId])
+  @@map("ratings")
+}
+
+model Report {
+  id        Int           @id @default(autoincrement())
+  reason    String
+  status    ReportStatus  @default(PENDING)
+  createdAt DateTime      @default(now())
+
+  reporterId Int
+  reporter   User @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  smokeId Int
+  smoke   Smoke @relation(fields: [smokeId], references: [id], onDelete: Cascade)
+
+  @@map("reports")
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+}
