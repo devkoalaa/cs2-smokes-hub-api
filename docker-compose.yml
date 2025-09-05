@@ -1,0 +1,30 @@
+# Versão do docker-compose
+version: "3.8"
+
+# Definição dos nossos serviços (containers)
+services:
+  # Nome do serviço do banco de dados
+  db:
+    # Imagem oficial do PostgreSQL. Usar uma versão específica (ex: 16) é melhor que 'latest'.
+    image: postgres:16-alpine
+    # Nome do container para fácil identificação
+    container_name: cs2_smokes_hub_db
+    # Reinicia o container automaticamente se ele parar
+    restart: always
+    # Variáveis de ambiente para configurar o PostgreSQL
+    environment:
+      POSTGRES_USER: cs2
+      POSTGRES_PASSWORD: cs2
+      POSTGRES_DB: cs2_smokes_hub
+    # Mapeamento de portas: porta_do_seu_pc:porta_do_container
+    # Isso permite que sua aplicação local acesse o banco na porta 5432
+    ports:
+      - "5432:5432"
+    # Volume para persistir os dados do banco
+    # Sem isso, você perderia todos os dados ao parar o container
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+# Definição dos volumes nomeados
+volumes:
+  postgres-data:
