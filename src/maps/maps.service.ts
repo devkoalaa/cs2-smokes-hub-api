@@ -1,27 +1,30 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { MapResponseDto } from '../common/dto/map-response.dto';
 
 @Injectable()
 export class MapsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll() {
+  async findAll(): Promise<MapResponseDto[]> {
     return this.prisma.map.findMany({
       select: {
         id: true,
         name: true,
-        imageUrl: true,
+        thumbnail: true,
+        radar: true,
       },
     });
   }
 
-  async findById(id: number) {
+  async findById(id: number): Promise<MapResponseDto> {
     const map = await this.prisma.map.findUnique({
       where: { id },
       select: {
         id: true,
         name: true,
-        imageUrl: true,
+        thumbnail: true,
+        radar: true,
       },
     });
 

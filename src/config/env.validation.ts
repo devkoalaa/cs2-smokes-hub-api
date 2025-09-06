@@ -16,10 +16,5 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @Transform(({ value }) => parseInt(value))
-  @IsPort()
   PORT?: number;
-
-  @IsOptional()
-  @IsString()
-  FRONTEND_URL?: string;
 }

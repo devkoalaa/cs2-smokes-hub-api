@@ -5,43 +5,21 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding database...');
 
-  // Seed maps with comprehensive CS2 map pool
   const maps = [
     {
       name: 'Dust2',
-      imageUrl: 'https://steamuserimages-a.akamaihd.net/ugc/1754695853838344413/B0C8E7F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5/',
+      thumbnail: 'https://static.wikia.nocookie.net/cswikia/images/1/16/Cs2_dust2.png',
+      radar: '/images/maps/map_dust2.webp'
     },
     {
       name: 'Mirage',
-      imageUrl: 'https://steamuserimages-a.akamaihd.net/ugc/1754695853838344414/B0C8E7F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5/',
+      thumbnail: 'https://static.wikia.nocookie.net/cswikia/images/f/f5/De_mirage_cs2.png',
+      radar: '/images/maps/map_mirage.webp'
     },
     {
       name: 'Inferno',
-      imageUrl: 'https://steamuserimages-a.akamaihd.net/ugc/1754695853838344415/B0C8E7F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5/',
-    },
-    {
-      name: 'Cache',
-      imageUrl: 'https://steamuserimages-a.akamaihd.net/ugc/1754695853838344416/B0C8E7F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5/',
-    },
-    {
-      name: 'Overpass',
-      imageUrl: 'https://steamuserimages-a.akamaihd.net/ugc/1754695853838344417/B0C8E7F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5/',
-    },
-    {
-      name: 'Vertigo',
-      imageUrl: 'https://steamuserimages-a.akamaihd.net/ugc/1754695853838344418/B0C8E7F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5/',
-    },
-    {
-      name: 'Ancient',
-      imageUrl: 'https://steamuserimages-a.akamaihd.net/ugc/1754695853838344419/B0C8E7F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5/',
-    },
-    {
-      name: 'Anubis',
-      imageUrl: 'https://steamuserimages-a.akamaihd.net/ugc/1754695853838344420/B0C8E7F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5/',
-    },
-    {
-      name: 'Nuke',
-      imageUrl: 'https://steamuserimages-a.akamaihd.net/ugc/1754695853838344421/B0C8E7F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5/',
+      thumbnail: 'https://static.wikia.nocookie.net/cswikia/images/1/17/Cs2_inferno_remake.png',
+      radar: '/images/maps/map_inferno.webp'
     },
   ];
 

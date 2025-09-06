@@ -16,15 +16,18 @@ async function main() {
   const maps = [
     {
       name: 'Dust2',
-      imageUrl: 'https://steamuserimages-a.akamaihd.net/ugc/1754695853838344413/B0C8E7F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5/',
+      thumbnail: 'https://static.wikia.nocookie.net/cswikia/images/1/16/Cs2_dust2.png',
+      radar: '/images/maps/map_dust2.webp'
     },
     {
       name: 'Mirage',
-      imageUrl: 'https://steamuserimages-a.akamaihd.net/ugc/1754695853838344414/B0C8E7F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5/',
+      thumbnail: 'https://static.wikia.nocookie.net/cswikia/images/f/f5/De_mirage_cs2.png',
+      radar: '/images/maps/map_mirage.webp'
     },
     {
       name: 'Inferno',
-      imageUrl: 'https://steamuserimages-a.akamaihd.net/ugc/1754695853838344415/B0C8E7F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5F5/',
+      thumbnail: 'https://static.wikia.nocookie.net/cswikia/images/1/17/Cs2_inferno_remake.png',
+      radar: '/images/maps/map_inferno.webp'
     },
   ];
 

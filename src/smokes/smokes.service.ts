@@ -76,7 +76,7 @@ export class SmokesService {
             select: {
               id: true,
               name: true,
-              imageUrl: true,
+              thumbnail: true,
             },
           }),
         ]);
@@ -146,7 +146,7 @@ export class SmokesService {
           select: {
             id: true,
             name: true,
-            imageUrl: true,
+            thumbnail: true,
           },
         },
       },
@@ -163,7 +163,7 @@ export class SmokesService {
       createdAt: smoke.createdAt,
       updatedAt: smoke.updatedAt,
       author: {
-        id: smoke.author.id,
+        id: smoke.authorId,
         steamId: smoke.author.steamId,
         displayName: smoke.author.username, // Map username to displayName
         avatarUrl: smoke.author.avatarUrl,

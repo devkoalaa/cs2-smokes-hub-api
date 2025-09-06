@@ -10,10 +10,14 @@ export class SteamStrategy extends PassportStrategy(Strategy, 'steam') {
     private readonly configService: ConfigService,
     private readonly authService: AuthService,
   ) {
+    const returnURL = 'http://localhost:5757/auth/callback';
+    const realm = 'http://localhost:5757';
+    const apiKey = configService.get<string>('STEAM_API_KEY');
+    
     super({
-      returnURL: configService.get<string>('STEAM_RETURN_URL') || 'http://localhost:3000/auth/steam/return',
-      realm: configService.get<string>('STEAM_REALM') || 'http://localhost:3000',
-      apiKey: configService.get<string>('STEAM_API_KEY'),
+      returnURL,
+      realm,
+      apiKey,
     });
   }
 

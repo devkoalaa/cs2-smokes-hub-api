@@ -26,9 +26,10 @@ model User {
 }
 
 model Map {
-  id       Int    @id @default(autoincrement())
-  name     String @unique
-  imageUrl String
+  id        Int    @id @default(autoincrement())
+  name      String @unique
+  thumbnail String
+  radar     String
 
   smokes Smoke[]
 
@@ -72,10 +73,10 @@ model Rating {
 }
 
 model Report {
-  id        Int           @id @default(autoincrement())
+  id        Int          @id @default(autoincrement())
   reason    String
-  status    ReportStatus  @default(PENDING)
-  createdAt DateTime      @default(now())
+  status    ReportStatus @default(PENDING)
+  createdAt DateTime     @default(now())
 
   reporterId Int
   reporter   User @relation(fields: [reporterId], references: [id], onDelete: Cascade)

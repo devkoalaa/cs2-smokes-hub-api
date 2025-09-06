@@ -37,6 +37,7 @@ export class AuthController {
     status: 302,
     description: 'Redirects to Steam authentication page',
   })
+
   @Get('steam')
   @UseGuards(AuthGuard('steam'))
   async steamAuth() {
@@ -93,10 +94,8 @@ export class AuthController {
       // Generate JWT token for the authenticated user
       const token = await this.authService.generateJwtToken(user);
 
-      // In a real application, you might want to redirect to your frontend
-      // with the token as a query parameter or set it as a cookie
-      // For now, we'll return the token and user data as JSON
-      res.json({
+      // Return JSON response instead of redirect
+      const response = {
         message: 'Authentication successful',
         token,
         user: {
@@ -105,7 +104,9 @@ export class AuthController {
           username: user.username,
           avatarUrl: user.avatarUrl,
         },
-      });
+      };
+
+      res.json(response);
     } catch (error) {
       // If it's already an HttpException, re-throw it as is
       if (error instanceof HttpException) {
