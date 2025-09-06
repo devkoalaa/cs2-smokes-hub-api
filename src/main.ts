@@ -1,5 +1,3 @@
-// src/main.ts
-
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ExpressAdapter } from '@nestjs/platform-express';
@@ -8,12 +6,9 @@ import * as express from 'express';
 import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './common';
 
-// Variável para armazenar a instância da aplicação em cache
 let cachedApp: INestApplication;
 
-// A função bootstrap agora prepara e RETORNA a aplicação
 async function bootstrap(): Promise<INestApplication> {
-  // Se a aplicação já foi iniciada, retorne a instância em cache
   if (cachedApp) {
     return cachedApp;
   }
@@ -24,9 +19,8 @@ async function bootstrap(): Promise<INestApplication> {
     new ExpressAdapter(expressApp),
   );
 
-  // Mantenha todas as suas configurações aqui
   app.enableCors({
-    // origin: ['http://localhost:6969', 'http://localhost:3000', 'https://cs2smokeshub.vercel.app'],
+    origin: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -48,14 +42,13 @@ async function bootstrap(): Promise<INestApplication> {
     .addTag('auth').addTag('maps').addTag('smokes').addTag('ratings').addTag('reports')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api-docs', app, document, { swaggerOptions: { persistAuthorization: true } });
+  SwaggerModule.setup('/', app, document, { swaggerOptions: { persistAuthorization: true } });
 
   await app.init();
-  cachedApp = app; // Armazene a instância no cache
+  cachedApp = app;
   return app;
 }
 
-// Para executar localmente
 if (require.main === module) {
   bootstrap().then(async (app) => {
     const port = process.env.PORT || 6969;
@@ -68,7 +61,6 @@ if (require.main === module) {
   });
 }
 
-// O EXPORT DEFAULT é uma função assíncrona que a Vercel irá chamar
 export default async (req: any, res: any) => {
   const app = await bootstrap();
   const expressInstance = app.getHttpAdapter().getInstance();
