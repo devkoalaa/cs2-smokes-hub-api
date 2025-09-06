@@ -40,7 +40,7 @@ async function bootstrap(): Promise<INestApplication> {
     validationError: { target: false, value: false },
   }));
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV !== 'staging') {
     const config = new DocumentBuilder()
       .setTitle('CS2 Smokes Hub API')
       .setDescription('RESTful API for sharing and rating Counter-Strike 2 smoke grenade strategies')
