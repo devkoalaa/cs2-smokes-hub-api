@@ -26,7 +26,7 @@ async function bootstrap(): Promise<INestApplication> {
 
   // Mantenha todas as suas configurações aqui
   app.enableCors({
-    origin: ['http://localhost:5757', 'http://localhost:3000', 'https://cs2smokeshub.vercel.app'],
+    origin: ['http://localhost:6969', 'http://localhost:3000', 'https://cs2smokeshub.vercel.app'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
