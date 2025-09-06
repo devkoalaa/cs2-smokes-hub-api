@@ -1,25 +1,32 @@
-import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { ExpressAdapter } from '@nestjs/platform-express'; // NOVO: Importar o adapter
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as express from 'express'; // NOVO: Importar o express
 import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './common';
 
+// NOVO: Criar e exportar a instância do Express que a Vercel usará
+export const app = express();
+
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  
-  // CORS configuration for frontend integration
-  app.enableCors({
-    origin: ['http://localhost:5757', 'http://localhost:3000'], // Frontend ports
+  // MUDOU: O NestJS agora usa a instância do Express que criamos
+  const server = await NestFactory.create(
+    AppModule,
+    new ExpressAdapter(app),
+  );
+
+  // A partir daqui, usamos a variável 'server' em vez de 'app'
+  server.enableCors({
+    origin: ['http://localhost:5757', 'http://localhost:3000', 'https://cs2smokeshub.vercel.app'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   });
-  
-  // Global exception filter for consistent error handling
-  app.useGlobalFilters(new GlobalExceptionFilter());
-  
-  // Global validation pipe with comprehensive configuration
-  app.useGlobalPipes(new ValidationPipe({
+
+  server.useGlobalFilters(new GlobalExceptionFilter());
+
+  server.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     forbidNonWhitelisted: true,
     transform: true,
@@ -29,8 +36,8 @@ async function bootstrap() {
       value: false,
     },
   }));
-  
-  // Swagger/OpenAPI documentation setup
+
+  // if (process.env.NODE_ENV !== 'production') {
   const config = new DocumentBuilder()
     .setTitle('CS2 Smokes Hub API')
     .setDescription('RESTful API for sharing and rating Counter-Strike 2 smoke grenade strategies')
@@ -52,18 +59,20 @@ async function bootstrap() {
     .addTag('ratings', 'Rating system endpoints')
     .addTag('reports', 'Content moderation endpoints')
     .build();
-  
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document, {
+
+  const document = SwaggerModule.createDocument(server, config);
+  SwaggerModule.setup('api-docs', server, document, { // Mudei a rota para 'api-docs' para evitar conflitos
     swaggerOptions: {
       persistAuthorization: true,
     },
   });
-  
-  const port = process.env.PORT || 6969;
-  await app.listen(port);
-  
-  console.log(`🚀 CS2 Smokes Hub API is running on: http://localhost:${port}`);
-  console.log(`📚 Swagger documentation available at: http://localhost:${port}/api`);
+  // }
+
+  // MUDOU: Usamos init() para inicializar o app sem escutar uma porta
+  await server.init();
+
+  // REMOVIDO: A seção app.listen(port) e os console.log foram removidos
 }
+
+// A função é chamada para garantir que a configuração seja executada
 bootstrap();
