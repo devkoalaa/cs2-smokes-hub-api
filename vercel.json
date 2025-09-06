@@ -3,21 +3,14 @@
   "builds": [
     {
       "src": "dist/src/main.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": [
-          "prisma/**",
-          "dist/**"
-        ]
-      }
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "dist/src/main.js"
+      "dest": "/dist/src/main.js"
     }
   ],
-  "buildCommand": "npm run vercel-build",
-  "outputDirectory": "dist"
+  "buildCommand": "npm run vercel-build"
 }

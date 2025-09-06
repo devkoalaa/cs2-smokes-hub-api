@@ -26,7 +26,7 @@ async function bootstrap(): Promise<INestApplication> {
 
   // Mantenha todas as suas configurações aqui
   app.enableCors({
-    origin: ['http://localhost:5757', 'http://localhost:3000', 'https://sua-url-de-frontend.vercel.app'],
+    origin: ['http://localhost:5757', 'http://localhost:3000', 'https://cs2smokeshub.vercel.app'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -40,21 +40,32 @@ async function bootstrap(): Promise<INestApplication> {
     validationError: { target: false, value: false },
   }));
 
-  if (process.env.NODE_ENV !== 'staging') {
-    const config = new DocumentBuilder()
-      .setTitle('CS2 Smokes Hub API')
-      .setDescription('RESTful API for sharing and rating Counter-Strike 2 smoke grenade strategies')
-      .setVersion('1.0')
-      .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT', name: 'JWT', description: 'Enter JWT token', in: 'header' }, 'JWT-auth')
-      .addTag('auth').addTag('maps').addTag('smokes').addTag('ratings').addTag('reports')
-      .build();
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api-docs', app, document, { swaggerOptions: { persistAuthorization: true } });
-  }
+  const config = new DocumentBuilder()
+    .setTitle('CS2 Smokes Hub API')
+    .setDescription('RESTful API for sharing and rating Counter-Strike 2 smoke grenade strategies')
+    .setVersion('1.0')
+    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT', name: 'JWT', description: 'Enter JWT token', in: 'header' }, 'JWT-auth')
+    .addTag('auth').addTag('maps').addTag('smokes').addTag('ratings').addTag('reports')
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api-docs', app, document, { swaggerOptions: { persistAuthorization: true } });
 
   await app.init();
   cachedApp = app; // Armazene a instância no cache
   return app;
+}
+
+// Para executar localmente
+if (require.main === module) {
+  bootstrap().then(async (app) => {
+    const port = process.env.PORT || 6969;
+    await app.listen(port);
+    console.log(`🚀 Application is running on: http://localhost:${port}`);
+    console.log(`📖 Swagger is available at: http://localhost:${port}/api-docs`);
+  }).catch(error => {
+    console.error('Error starting application:', error);
+    process.exit(1);
+  });
 }
 
 // O EXPORT DEFAULT é uma função assíncrona que a Vercel irá chamar
