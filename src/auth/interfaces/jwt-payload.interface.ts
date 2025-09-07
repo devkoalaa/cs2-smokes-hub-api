@@ -1,7 +1,7 @@
 export interface JwtPayload {
-  sub: number; // User ID
+  sub: number;
   steamId: string;
   username: string;
-  iat?: number; // Issued at
-  exp?: number; // Expiration
+  iat?: number;
+  exp?: number;
 }

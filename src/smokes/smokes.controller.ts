@@ -1,27 +1,27 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Delete,
-  Param,
   Body,
-  UseGuards,
-  Request,
-  ParseIntPipe,
+  Controller,
+  Delete,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
+  ParseIntPipe,
+  Post,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { SmokesService } from './smokes.service';
+import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { CreateSmokeDto } from '../common/dto/create-smoke.dto';
 import { SmokeResponseDto } from '../common/dto/smoke-response.dto';
-import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { SmokesService } from './smokes.service';
 
 @ApiTags('smokes')
 @Controller()
 export class SmokesController {
-  constructor(private readonly smokesService: SmokesService) {}
+  constructor(private readonly smokesService: SmokesService) { }
 
   /**
    * GET /maps/:mapId/smokes
@@ -45,14 +45,13 @@ export class SmokesController {
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Create a new smoke strategy' })
+  @ApiBody({ type: CreateSmokeDto })
   @ApiResponse({ status: 201, description: 'Smoke strategy created successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing JWT token' })
   async createSmoke(
     @Body() createSmokeDto: CreateSmokeDto,
     @Request() req: { user: JwtPayload },
   ): Promise<SmokeResponseDto> {
-    console.log('createSmokeDto', createSmokeDto);
-    
     const authorId = req.user.sub;
     return this.smokesService.create(createSmokeDto, authorId);
   }

@@ -3,6 +3,7 @@ import { ReportsController } from './reports.controller';
 import { ReportsService } from './reports.service';
 import { ReportSmokeDto } from '../common/dto/report-smoke.dto';
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
+import { describe, beforeEach, afterEach, it } from 'node:test';
 
 describe('ReportsController', () => {
   let controller: ReportsController;
@@ -37,7 +38,7 @@ describe('ReportsController', () => {
 
   describe('reportSmoke', () => {
     const mockJwtPayload: JwtPayload = {
-      sub: 1,
+      id: 1,
       steamId: '76561198000000000',
       username: 'testuser',
     };
@@ -60,7 +61,7 @@ describe('ReportsController', () => {
     it('should extract reporterId from JWT payload', async () => {
       const smokeId = 456;
       const customPayload: JwtPayload = {
-        sub: 999,
+        id: 999,
         steamId: '76561198111111111',
         username: 'anotheruser',
       };
