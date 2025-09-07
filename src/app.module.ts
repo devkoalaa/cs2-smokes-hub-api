@@ -6,6 +6,7 @@ import { MapsModule } from './maps/maps.module';
 import { SmokesModule } from './smokes/smokes.module';
 import { RatingsModule } from './ratings/ratings.module';
 import { ReportsModule } from './reports/reports.module';
+import { UsersModule } from './users/users.module';
 import { EnvironmentVariables } from './config/env.validation';
 import { validateSync } from 'class-validator';
 import { plainToClass } from 'class-transformer';
@@ -37,6 +38,7 @@ function validate(config: Record<string, unknown>) {
     SmokesModule,
     RatingsModule,
     ReportsModule,
+    UsersModule,
   ],
 })
 export class AppModule {}

@@ -7,14 +7,23 @@ export class MapsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(): Promise<MapResponseDto[]> {
-    return this.prisma.map.findMany({
+    const maps = await this.prisma.map.findMany({
       select: {
         id: true,
         name: true,
         thumbnail: true,
         radar: true,
+        _count: { select: { smokes: true } },
       },
     });
+
+    return maps.map((m) => ({
+      id: m.id,
+      name: m.name,
+      thumbnail: m.thumbnail,
+      radar: m.radar,
+      smokesCount: m._count?.smokes ?? 0,
+    }));
   }
 
   async findById(id: number): Promise<MapResponseDto> {
@@ -25,6 +34,7 @@ export class MapsService {
         name: true,
         thumbnail: true,
         radar: true,
+        _count: { select: { smokes: true } },
       },
     });
 
@@ -32,6 +42,12 @@ export class MapsService {
       throw new NotFoundException(`Map with ID ${id} not found`);
     }
 
-    return map;
+    return {
+      id: map.id,
+      name: map.name,
+      thumbnail: map.thumbnail,
+      radar: map.radar,
+      smokesCount: map._count?.smokes ?? 0,
+    };
   }
 }

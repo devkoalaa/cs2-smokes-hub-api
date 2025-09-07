@@ -3,4 +3,5 @@ export class MapResponseDto {
   name: string;
   thumbnail: string;
   radar?: string;
+  smokesCount?: number;
 }
