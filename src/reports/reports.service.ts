@@ -19,13 +19,13 @@ export class ReportsService {
       throw new BadRequestException('Report reason is required');
     }
 
-    // Verify the smoke exists
+    // Verify the smoke exists and is not deleted
     const smokeExists = await this.prisma.smoke.findUnique({
       where: { id: smokeId },
-      select: { id: true },
+      select: { id: true, deletedAt: true },
     });
 
-    if (!smokeExists) {
+    if (!smokeExists || smokeExists.deletedAt) {
       throw new NotFoundException(`Smoke with ID ${smokeId} not found`);
     }
 

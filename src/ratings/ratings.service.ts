@@ -18,13 +18,13 @@ export class RatingsService {
       throw new BadRequestException('Rating value must be either 1 or -1');
     }
 
-    // Verify the smoke exists
+    // Verify the smoke exists and is not deleted
     const smokeExists = await this.prisma.smoke.findUnique({
       where: { id: smokeId },
-      select: { id: true },
+      select: { id: true, deletedAt: true },
     });
 
-    if (!smokeExists) {
+    if (!smokeExists || smokeExists.deletedAt) {
       throw new NotFoundException(`Smoke with ID ${smokeId} not found`);
     }
 
@@ -84,13 +84,13 @@ export class RatingsService {
    * Remove a rating by a specific user for a specific smoke
    */
   async removeRating(userId: number, smokeId: number): Promise<void> {
-    // Verify the smoke exists
+    // Verify the smoke exists and is not deleted
     const smokeExists = await this.prisma.smoke.findUnique({
       where: { id: smokeId },
-      select: { id: true },
+      select: { id: true, deletedAt: true },
     });
 
-    if (!smokeExists) {
+    if (!smokeExists || smokeExists.deletedAt) {
       throw new NotFoundException(`Smoke with ID ${smokeId} not found`);
     }
 

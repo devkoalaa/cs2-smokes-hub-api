@@ -51,7 +51,7 @@ export class SmokesService {
         COALESCE(SUM(r.value), 0) as score
       FROM smokes s
       LEFT JOIN ratings r ON s.id = r."smokeId"
-      WHERE s."mapId" = ${mapId}
+      WHERE s."mapId" = ${mapId} AND s."deletedAt" IS NULL
       GROUP BY s.id
       ORDER BY score DESC, s."createdAt" DESC
     `;
@@ -175,7 +175,7 @@ export class SmokesService {
   }
 
   /**
-   * Delete a smoke with ownership validation
+   * Soft delete a smoke with ownership validation
    * User can only delete their own smokes
    */
   async delete(id: number, userId: number): Promise<void> {
@@ -185,6 +185,7 @@ export class SmokesService {
       select: {
         id: true,
         authorId: true,
+        deletedAt: true,
       },
     });
 
@@ -192,14 +193,21 @@ export class SmokesService {
       throw new NotFoundException(`Smoke with ID ${id} not found`);
     }
 
+    if (smoke.deletedAt) {
+      throw new NotFoundException(`Smoke with ID ${id} already deleted`);
+    }
+
     // Check ownership
     if (smoke.authorId !== userId) {
       throw new ForbiddenException('You can only delete your own smokes');
     }
 
-    // Delete the smoke (ratings and reports will be cascade deleted)
-    await this.prisma.smoke.delete({
+    // Soft delete the smoke by setting deletedAt
+    await this.prisma.smoke.update({
       where: { id },
+      data: {
+        deletedAt: new Date(),
+      },
     });
   }
 }
