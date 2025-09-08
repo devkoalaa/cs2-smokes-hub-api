@@ -86,6 +86,7 @@ model Report {
   smokeId Int
   smoke   Smoke @relation(fields: [smokeId], references: [id], onDelete: Cascade)
 
+  @@unique([reporterId, smokeId])
   @@map("reports")
 }
 

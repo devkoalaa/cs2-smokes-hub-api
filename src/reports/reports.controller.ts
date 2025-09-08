@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Get,
   Param,
   Body,
   UseGuards,
@@ -19,6 +20,40 @@ import { ApiTags } from '@nestjs/swagger';
 @Controller()
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
+
+  /**
+   * GET /smokes/:smokeId/report/status
+   * Check if the current user has already reported this smoke
+   * Protected endpoint - requires JWT authentication
+   */
+  @Get('smokes/:smokeId/report/status')
+  @UseGuards(JwtAuthGuard)
+  async getReportStatus(
+    @Param('smokeId', ParseIntPipe) smokeId: number,
+    @Request() req: { user: JwtPayload },
+  ): Promise<{ hasReported: boolean }> {
+    const reporterId = req.user.sub;
+    
+    const hasReported = await this.reportsService.hasUserReported(smokeId, reporterId);
+    
+    return { hasReported };
+  }
+
+  /**
+   * POST /reports/status/batch
+   * Check report status for multiple smokes at once
+   * Protected endpoint - requires JWT authentication
+   */
+  @Post('reports/status/batch')
+  @UseGuards(JwtAuthGuard)
+  async getReportsStatusBatch(
+    @Body() body: { smokeIds: number[] },
+    @Request() req: { user: JwtPayload },
+  ): Promise<{ smokeId: number; hasReported: boolean }[]> {
+    const reporterId = req.user.sub;
+    
+    return await this.reportsService.getReportsStatusForSmokes(body.smokeIds, reporterId);
+  }
 
   /**
    * POST /smokes/:smokeId/report

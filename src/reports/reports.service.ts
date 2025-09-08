@@ -8,8 +8,49 @@ export class ReportsService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
+   * Check if a user has already reported a specific smoke
+   */
+  async hasUserReported(smokeId: number, reporterId: number): Promise<boolean> {
+    const existingReport = await this.prisma.report.findUnique({
+      where: {
+        reporterId_smokeId: {
+          reporterId,
+          smokeId,
+        },
+      },
+    });
+
+    return !!existingReport;
+  }
+
+  /**
+   * Get report status for multiple smokes at once
+   */
+  async getReportsStatusForSmokes(smokeIds: number[], reporterId: number): Promise<{ smokeId: number; hasReported: boolean }[]> {
+    const reports = await this.prisma.report.findMany({
+      where: {
+        reporterId,
+        smokeId: {
+          in: smokeIds,
+        },
+      },
+      select: {
+        smokeId: true,
+      },
+    });
+
+    const reportedSmokeIds = new Set(reports.map(report => report.smokeId));
+    
+    return smokeIds.map(smokeId => ({
+      smokeId,
+      hasReported: reportedSmokeIds.has(smokeId),
+    }));
+  }
+
+  /**
    * Create a new report for content moderation
    * Sets default status to PENDING for new reports
+   * Prevents duplicate reports from the same user for the same smoke
    */
   async create(smokeId: number, reporterId: number, reportSmokeDto: ReportSmokeDto): Promise<void> {
     const { reason } = reportSmokeDto;
@@ -37,6 +78,20 @@ export class ReportsService {
 
     if (!reporterExists) {
       throw new NotFoundException(`User with ID ${reporterId} not found`);
+    }
+
+    // Check if user has already reported this smoke
+    const existingReport = await this.prisma.report.findUnique({
+      where: {
+        reporterId_smokeId: {
+          reporterId,
+          smokeId,
+        },
+      },
+    });
+
+    if (existingReport) {
+      throw new BadRequestException('You have already reported this smoke');
     }
 
     // Create the report with default PENDING status
