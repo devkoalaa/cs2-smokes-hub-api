@@ -11,6 +11,7 @@ export class MapsService {
       select: {
         id: true,
         name: true,
+        description: true,
         thumbnail: true,
         radar: true,
         _count: { select: { smokes: true } },
@@ -20,6 +21,7 @@ export class MapsService {
     return maps.map((m) => ({
       id: m.id,
       name: m.name,
+      description: m.description,
       thumbnail: m.thumbnail,
       radar: m.radar,
       smokesCount: m._count?.smokes ?? 0,
@@ -32,6 +34,7 @@ export class MapsService {
       select: {
         id: true,
         name: true,
+        description: true,
         thumbnail: true,
         radar: true,
         _count: { select: { smokes: true } },
@@ -45,6 +48,7 @@ export class MapsService {
     return {
       id: map.id,
       name: map.name,
+      description: map.description,
       thumbnail: map.thumbnail,
       radar: map.radar,
       smokesCount: map._count?.smokes ?? 0,

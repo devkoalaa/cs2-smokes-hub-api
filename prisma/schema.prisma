@@ -26,10 +26,11 @@ model User {
 }
 
 model Map {
-  id        Int    @id @default(autoincrement())
-  name      String @unique
-  thumbnail String
-  radar     String
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  description String?
+  thumbnail   String
+  radar       String
 
   smokes Smoke[]
 

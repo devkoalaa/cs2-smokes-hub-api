@@ -34,8 +34,8 @@ describe('MapsService', () => {
   describe('findAll', () => {
     it('should return all maps', async () => {
       const expectedMaps = [
-        { id: 1, name: 'Dust2', imageUrl: 'dust2.jpg' },
-        { id: 2, name: 'Mirage', imageUrl: 'mirage.jpg' },
+        { id: 1, name: 'Dust2', description: 'Classic desert map', thumbnail: 'dust2.jpg', radar: 'dust2_radar.jpg', _count: { smokes: 5 } },
+        { id: 2, name: 'Mirage', description: 'Middle Eastern city map', thumbnail: 'mirage.jpg', radar: 'mirage_radar.jpg', _count: { smokes: 8 } },
       ];
 
       mockPrismaService.map.findMany.mockResolvedValue(expectedMaps);
@@ -46,10 +46,16 @@ describe('MapsService', () => {
         select: {
           id: true,
           name: true,
-          imageUrl: true,
+          description: true,
+          thumbnail: true,
+          radar: true,
+          _count: { select: { smokes: true } },
         },
       });
-      expect(result).toEqual(expectedMaps);
+      expect(result).toEqual([
+        { id: 1, name: 'Dust2', description: 'Classic desert map', thumbnail: 'dust2.jpg', radar: 'dust2_radar.jpg', smokesCount: 5 },
+        { id: 2, name: 'Mirage', description: 'Middle Eastern city map', thumbnail: 'mirage.jpg', radar: 'mirage_radar.jpg', smokesCount: 8 },
+      ]);
     });
 
     it('should return empty array when no maps exist', async () => {
@@ -63,7 +69,7 @@ describe('MapsService', () => {
 
   describe('findById', () => {
     it('should return map when found', async () => {
-      const expectedMap = { id: 1, name: 'Dust2', imageUrl: 'dust2.jpg' };
+      const expectedMap = { id: 1, name: 'Dust2', description: 'Classic desert map', thumbnail: 'dust2.jpg', radar: 'dust2_radar.jpg', _count: { smokes: 5 } };
 
       mockPrismaService.map.findUnique.mockResolvedValue(expectedMap);
 
@@ -74,10 +80,20 @@ describe('MapsService', () => {
         select: {
           id: true,
           name: true,
-          imageUrl: true,
+          description: true,
+          thumbnail: true,
+          radar: true,
+          _count: { select: { smokes: true } },
         },
       });
-      expect(result).toEqual(expectedMap);
+      expect(result).toEqual({
+        id: 1,
+        name: 'Dust2',
+        description: 'Classic desert map',
+        thumbnail: 'dust2.jpg',
+        radar: 'dust2_radar.jpg',
+        smokesCount: 5,
+      });
     });
 
     it('should throw NotFoundException when map not found', async () => {
@@ -92,7 +108,10 @@ describe('MapsService', () => {
         select: {
           id: true,
           name: true,
-          imageUrl: true,
+          description: true,
+          thumbnail: true,
+          radar: true,
+          _count: { select: { smokes: true } },
         },
       });
     });
