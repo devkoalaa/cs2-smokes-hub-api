@@ -2,7 +2,7 @@ services:
   db:
     image: postgres:16-alpine
     container_name: cs2_smokes_hub_db
-    restart: always
+    restart: on-failure
     environment:
       POSTGRES_USER: cs2
       POSTGRES_PASSWORD: cs2

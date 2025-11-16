@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateSmokeDto } from '../common/dto/create-smoke.dto';
+import { CreateSmokeDto, SmokeType } from '../common/dto/create-smoke.dto';
 import { SmokeResponseDto } from '../common/dto/smoke-response.dto';
 
 @Injectable()
@@ -28,6 +28,7 @@ export class SmokesService {
         title: string;
         videoUrl: string;
         timestamp: number;
+        type: string;
         x_coord: number;
         y_coord: number;
         createdAt: Date;
@@ -42,6 +43,7 @@ export class SmokesService {
         s.title,
         s."videoUrl",
         s.timestamp,
+        s.type,
         s.x_coord,
         s.y_coord,
         s."createdAt",
@@ -86,6 +88,7 @@ export class SmokesService {
           title: smoke.title,
           videoUrl: smoke.videoUrl,
           timestamp: smoke.timestamp,
+          type: smoke.type as SmokeType,
           x_coord: smoke.x_coord,
           y_coord: smoke.y_coord,
           score: Number(smoke.score), // Convert BigInt to number
@@ -126,6 +129,7 @@ export class SmokesService {
         title: createSmokeDto.title,
         videoUrl: createSmokeDto.videoUrl,
         timestamp: createSmokeDto.timestamp,
+        type: createSmokeDto.type || SmokeType.SMOKE,
         x_coord: createSmokeDto.x_coord,
         y_coord: createSmokeDto.y_coord,
         authorId,
@@ -157,6 +161,7 @@ export class SmokesService {
       title: smoke.title,
       videoUrl: smoke.videoUrl,
       timestamp: smoke.timestamp,
+      type: smoke.type as SmokeType,
       x_coord: smoke.x_coord,
       y_coord: smoke.y_coord,
       score: 0, // New smoke has no ratings yet

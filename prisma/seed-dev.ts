@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, SmokeType } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -95,15 +95,17 @@ async function main() {
       title: 'Xbox Smoke from Long',
       videoUrl: 'https://www.youtube.com/watch?v=example1',
       timestamp: 15,
+      type: SmokeType.SMOKE,
       x_coord: 1024.5,
       y_coord: 768.2,
       authorId: createdUsers[0].id,
       mapId: createdMaps[0].id, // Dust2
     },
     {
-      title: 'CT Smoke from Tunnels',
+      title: 'CT Flashbang from Tunnels',
       videoUrl: 'https://www.youtube.com/watch?v=example2',
       timestamp: 22,
+      type: SmokeType.BANG,
       x_coord: 512.8,
       y_coord: 1024.1,
       authorId: createdUsers[1].id,
@@ -113,28 +115,51 @@ async function main() {
       title: 'Connector Smoke from Palace',
       videoUrl: 'https://www.youtube.com/watch?v=example3',
       timestamp: 18,
+      type: SmokeType.SMOKE,
       x_coord: 800.3,
       y_coord: 600.7,
       authorId: createdUsers[0].id,
       mapId: createdMaps[1].id, // Mirage
     },
     {
-      title: 'Jungle Smoke from Ramp',
+      title: 'Jungle Molotov from Ramp',
       videoUrl: 'https://www.youtube.com/watch?v=example4',
       timestamp: 25,
+      type: SmokeType.MOLOTOV,
       x_coord: 900.1,
       y_coord: 450.9,
       authorId: createdUsers[2].id,
       mapId: createdMaps[1].id, // Mirage
     },
     {
-      title: 'Balcony Smoke from Apartments',
+      title: 'Balcony Strategy Guide',
       videoUrl: 'https://www.youtube.com/watch?v=example5',
       timestamp: 20,
+      type: SmokeType.STRATEGY,
       x_coord: 700.5,
       y_coord: 800.3,
       authorId: createdUsers[1].id,
       mapId: createdMaps[2].id, // Inferno
+    },
+    {
+      title: 'A Site Flashbang Combo',
+      videoUrl: 'https://www.youtube.com/watch?v=example6',
+      timestamp: 30,
+      type: SmokeType.BANG,
+      x_coord: 600.2,
+      y_coord: 550.8,
+      authorId: createdUsers[2].id,
+      mapId: createdMaps[0].id, // Dust2
+    },
+    {
+      title: 'B Site Molotov Defense',
+      videoUrl: 'https://www.youtube.com/watch?v=example7',
+      timestamp: 12,
+      type: SmokeType.MOLOTOV,
+      x_coord: 450.7,
+      y_coord: 750.4,
+      authorId: createdUsers[0].id,
+      mapId: createdMaps[1].id, // Mirage
     },
   ];
 
