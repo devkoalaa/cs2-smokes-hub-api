@@ -31,6 +31,7 @@ model Map {
   description String?
   thumbnail   String
   radar       String
+  radarLower  String? // Radar do andar inferior (para mapas como Nuke)
 
   smokes Smoke[]
 
@@ -45,6 +46,7 @@ model Smoke {
   type      SmokeType @default(SMOKE)
   x_coord   Float
   y_coord   Float
+  floor     String?  // 'upper' ou 'lower' para mapas com múltiplos andares (ex: Nuke)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?

@@ -21,7 +21,7 @@ async function main() {
     {
       name: "Inferno",
       radar: "/images/maps/map_inferno.webp",
-      "thumbnail": "https://i.imgur.com/hjkC5vU.png",
+      thumbnail: "https://i.imgur.com/hjkC5vU.png",
       description: "Vila italiana. Ruas estreitas e corredores que favorecem táticas com granadas e confrontos de perto."
     },
     {
@@ -33,14 +33,21 @@ async function main() {
     {
       name: "Nuke",
       radar: "/images/maps/map_nuke.webp",
+      radarLower: "/images/maps/map_nuke_lower.webp",
       thumbnail: "https://i.imgur.com/fJUkerQ.png",
-      "description": "Usina nuclear. Design único, com duas bombas em andares diferentes. Famoso por sua verticalidade e paredes que podem ser atravessadas."
+      description: "Usina nuclear. Design único, com duas bombas em andares diferentes. Famoso por sua verticalidade e paredes que podem ser atravessadas."
     },
     {
       name: "Train",
       radar: "/images/maps/map_train.webp",
       thumbnail: "https://i.imgur.com/SOAqj68.png",
-      description: "Pátio de trens. Labirinto de vagões e trilhos, ideal para flancos e jogadas em equipe, com foco em confrontos rápidos."
+      description: "Pátio de trens. Labirinto de vagões e longas linhas de visão, exigindo domínio de AWPs e rotações inteligentes."
+    },
+    {
+      name: "Overpass",
+      radar: "/images/maps/map_overpass.webp",
+      thumbnail: "https://i.imgur.com/7Ord7DS.png",
+      description: "Combate tático em um cenário urbano vertical situado em um canal de Berlim."
     }
   ];
 

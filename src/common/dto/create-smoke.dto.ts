@@ -47,4 +47,14 @@ export class CreateSmokeDto {
   @IsOptional()
   @IsEnum(SmokeType, { message: 'O tipo deve ser um dos: SMOKE, BANG, MOLOTOV, STRATEGY' })
   type?: SmokeType;
+
+  @ApiProperty({ 
+    description: 'Floor level for multi-floor maps (e.g., Nuke). Use "upper" or "lower"', 
+    example: 'upper',
+    required: false 
+  })
+  @IsOptional()
+  @IsString()
+  @IsEnum(['upper', 'lower'], { message: 'O andar deve ser "upper" ou "lower"' })
+  floor?: string;
 }

@@ -31,6 +31,7 @@ export class SmokesService {
         type: string;
         x_coord: number;
         y_coord: number;
+        floor: string | null;
         createdAt: Date;
         updatedAt: Date;
         authorId: number;
@@ -46,6 +47,7 @@ export class SmokesService {
         s.type,
         s.x_coord,
         s.y_coord,
+        s.floor,
         s."createdAt",
         s."updatedAt",
         s."authorId",
@@ -91,6 +93,7 @@ export class SmokesService {
           type: smoke.type as SmokeType,
           x_coord: smoke.x_coord,
           y_coord: smoke.y_coord,
+          floor: smoke.floor || undefined,
           score: Number(smoke.score), // Convert BigInt to number
           createdAt: smoke.createdAt,
           updatedAt: smoke.updatedAt,
@@ -132,6 +135,7 @@ export class SmokesService {
         type: createSmokeDto.type || SmokeType.SMOKE,
         x_coord: createSmokeDto.x_coord,
         y_coord: createSmokeDto.y_coord,
+        floor: createSmokeDto.floor,
         authorId,
         mapId: createSmokeDto.mapId,
       },
@@ -164,6 +168,7 @@ export class SmokesService {
       type: smoke.type as SmokeType,
       x_coord: smoke.x_coord,
       y_coord: smoke.y_coord,
+      floor: smoke.floor || undefined,
       score: 0, // New smoke has no ratings yet
       createdAt: smoke.createdAt,
       updatedAt: smoke.updatedAt,

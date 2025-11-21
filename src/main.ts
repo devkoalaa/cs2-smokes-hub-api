@@ -53,8 +53,8 @@ if (require.main === module) {
   bootstrap().then(async (app) => {
     const port = process.env.PORT || 6969;
     await app.listen(port);
-    console.log(`🚀 Application is running on: http://localhost:${port}`);
-    console.log(`📖 Swagger is available at: http://localhost:${port}/api-docs`);
+    console.log(`\n🚀 API rodando em: http://localhost:${port}`);
+    console.log(`📖 Swagger: http://localhost:${port}/api-docs\n`);
   }).catch(error => {
     console.error('Error starting application:', error);
     process.exit(1);

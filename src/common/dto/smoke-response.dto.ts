@@ -10,6 +10,7 @@ export class SmokeResponseDto {
   type: SmokeType;
   x_coord: number;
   y_coord: number;
+  floor?: string; // 'upper' ou 'lower' para mapas com múltiplos andares
   score: number;
   createdAt: Date;
   updatedAt: Date;

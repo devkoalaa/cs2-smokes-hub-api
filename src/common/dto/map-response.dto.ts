@@ -4,5 +4,6 @@ export class MapResponseDto {
   description?: string;
   thumbnail: string;
   radar?: string;
+  radarLower?: string; // Radar do andar inferior (para mapas como Nuke)
   smokesCount?: number;
 }
