@@ -15,6 +15,7 @@ export class MapsService {
         thumbnail: true,
         radar: true,
         radarLower: true,
+        isActive: true,
         _count: { select: { smokes: true } },
       },
     });
@@ -26,6 +27,7 @@ export class MapsService {
       thumbnail: m.thumbnail,
       radar: m.radar,
       radarLower: m.radarLower,
+      isActive: m.isActive,
       smokesCount: m._count?.smokes ?? 0,
     }));
   }
@@ -40,6 +42,7 @@ export class MapsService {
         thumbnail: true,
         radar: true,
         radarLower: true,
+        isActive: true,
         _count: { select: { smokes: true } },
       },
     });
@@ -55,6 +58,7 @@ export class MapsService {
       thumbnail: map.thumbnail,
       radar: map.radar,
       radarLower: map.radarLower,
+      isActive: map.isActive,
       smokesCount: map._count?.smokes ?? 0,
     };
   }

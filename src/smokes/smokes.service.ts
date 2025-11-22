@@ -155,6 +155,7 @@ export class SmokesService {
             id: true,
             name: true,
             thumbnail: true,
+            isActive: true,
           },
         },
       },
