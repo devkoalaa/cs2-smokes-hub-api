@@ -128,4 +128,15 @@ def advanced(parser, players, ends):
         result['aim'] = {key: {'n': len(values), 'mean': round(sum(values)/len(values), 3)} for key, values in samples[p].items() if values}
     if [sum(s['wins'][i] for s in segments) for i in (0, 1)] != [players[0]['scoreFor'], players[0]['scoreAgainst']]:
         segments = []
-    return dict(players=stats, segments=segments)
+    premier = False
+    if 'rank_update' in parser.list_game_events():
+        for row in parser.parse_event('rank_update').sort_values('tick').itertuples():
+            player = str(row.user_steamid)
+            if player not in stats or row.rank_type_id != 11 or row.tick < ranges[-1][1]:
+                continue
+            premier = True
+            if row.rank_new > 0:
+                stats[player]['premierAfter'] = int(row.rank_new)
+                if row.rank_old > 0:
+                    stats[player]['premierDelta'] = int(row.rank_new - row.rank_old)
+    return dict(version=2, premier=premier, players=stats, segments=segments)
