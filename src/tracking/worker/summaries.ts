@@ -6,18 +6,21 @@ import { PrismaClient } from '@prisma/client';
 export async function queueSummaries(db: PrismaClient, allowed: string[], directory: string) {
   const matches = await db.trackedMatch.findMany({
     where: { status: 'READY', summaryPending: true }, orderBy: { id: 'asc' }, take: 10,
-    include: { players: { where: { steamId: { in: allowed } } } },
+    include: { players: true },
   });
   if (!matches.length) return;
   const start = Date.parse((await readFile(join(directory, 'enabled-at'), 'utf8')).trim());
   if (!Number.isFinite(start)) throw new Error('Data de ativação inválida');
   for (const match of matches) {
     if (match.playedAt && match.playedAt.getTime() >= start) {
-      const analysis = match.analysis as { players?: Record<string, { premierAfter?: number; premierDelta?: number }> } | null;
-      for (const player of match.players) {
+      const analysis = match.analysis as { players?: Record<string, { premierAfter?: number; premierDelta?: number; clutch?: number; multi?: number; flashed?: number }> } | null;
+      const roster = match.players.map(p => ({ team: p.team, name: p.name, kills: p.kills, deaths: p.deaths }));
+      for (const player of match.players.filter(p => allowed.includes(p.steamId))) {
         const stats = analysis?.players?.[player.steamId];
         const summary = {
           matchId: match.id, steamId: player.steamId, map: match.map, playedAt: match.playedAt,
+          mode: match.mode, team: player.team, roster, headshots: player.headshots,
+          clutches: stats?.clutch, multi: stats?.multi, flashed: stats?.flashed,
           scoreFor: player.scoreFor, scoreAgainst: player.scoreAgainst,
           kills: player.kills, deaths: player.deaths, assists: player.assists,
           adr: player.damage == null || !player.rounds ? null : Math.round(player.damage / player.rounds),
