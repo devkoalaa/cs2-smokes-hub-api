@@ -96,3 +96,31 @@ describe('Descoberta incremental Steam', () => {
     await expect(nextShareCode('secret', 'id', 'auth', 'known')).rejects.toThrow();
   });
 });
+
+describe('Integração com o Clodoaldo', () => {
+  const { BotTokenGuard, TrackingBotService } = require('./tracking.bot');
+  const { UnauthorizedException, ServiceUnavailableException } = require('@nestjs/common');
+  const context = (authorization?: string) => ({ switchToHttp: () => ({ getRequest: () => ({ headers: { authorization } }) }) }) as any;
+  const token = 'x'.repeat(40);
+  it('exige o token do bot e falha fechado sem configuração', () => {
+    const guard = new BotTokenGuard(new ConfigService({ CS2_BOT_TOKEN: token }));
+    expect(guard.canActivate(context(`Bearer ${token}`))).toBe(true);
+    expect(() => guard.canActivate(context(`Bearer ${'y'.repeat(40)}`))).toThrow(UnauthorizedException);
+    expect(() => guard.canActivate(context())).toThrow(UnauthorizedException);
+    expect(() => new BotTokenGuard(new ConfigService({})).canActivate(context(`Bearer ${token}`))).toThrow(ServiceUnavailableException);
+  });
+  it('só responde sobre o grupo e mostra só companheiros do grupo', async () => {
+    const me = '76561198143147452', friend = '76561198132822021', stranger = '76561198000000001';
+    const base = { assists: 2, headshots: 5, damage: 1500, rounds: 20, scoreFor: 13, scoreAgainst: 7, kills: 10, deaths: 8 };
+    const match = { id: 3, map: 'de_nuke', mode: 'competitive', playedAt: new Date(0), rounds: 20, analysis: null, players: [
+      { ...base, steamId: me, name: 'koala', team: 0 }, { ...base, steamId: friend, name: 'Moacir', team: 0 },
+      { ...base, steamId: stranger, name: 'aleatório', team: 0 }, { ...base, steamId: '76561198000000002', name: 'rival', team: 1, scoreFor: 7, scoreAgainst: 13 }] };
+    const db = { trackedMatch: { findMany: jest.fn().mockResolvedValue([match]) } } as any;
+    const service = new TrackingBotService(db, new ConfigService({ TRACKING_ALLOWED_STEAM_IDS: `${me},${friend}`, TRACKING_ENCRYPTION_KEY: 'ab'.repeat(32) }));
+    await expect(service.recent(stranger, 5)).rejects.toThrow(NotFoundException);
+    const [card] = await service.recent(me, 5);
+    expect(card.teammates.map((t: any) => t.name)).toEqual(['Moacir']);
+    expect(card.player).toMatchObject({ kills: 10, adr: 75, hsPercent: 50, rating: 1 });
+    expect(card.shareKey).toMatch(/^[a-f0-9]{16}$/);
+  });
+});

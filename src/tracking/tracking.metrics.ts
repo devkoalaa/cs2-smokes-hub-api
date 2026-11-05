@@ -21,3 +21,16 @@ export function summarize(rows: StatRow[]) {
     adrMatches: damageRows.length,
   };
 }
+
+type RatingRow = { kills: number; assists: number; damage: number | null };
+// Mesma conta do "Rating" do site (cs2-smokes/lib/match.ts): contribuição
+// comparada à dos jogadores da partida, 1,00 = média. Sem dano de alguém, null.
+export function hubRating(p: RatingRow, players: RatingRow[]) {
+  if (players.some(row => row.damage == null)) return null;
+  const total = players.reduce((sum, row) => ({ kills: sum.kills + row.kills, assists: sum.assists + row.assists, damage: sum.damage + (row.damage ?? 0) }),
+    { kills: 0, assists: 0, damage: 0 });
+  const metrics: [number, number, number][] = [[p.kills, total.kills, 0.5], [p.damage ?? 0, total.damage, 0.35], [p.assists, total.assists, 0.15]];
+  const available = metrics.filter(([, sum]) => sum > 0);
+  const weights = available.reduce((sum, [, , weight]) => sum + weight, 0);
+  return weights ? available.reduce((sum, [v, all, weight]) => sum + weight * v / all, 0) * players.length / weights : null;
+}
