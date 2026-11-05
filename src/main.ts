@@ -36,7 +36,7 @@ async function bootstrap(): Promise<INestApplication> {
   }));
 
   const config = new DocumentBuilder()
-    .setTitle('CS2 Smokes Hub API')
+    .setTitle('CS2 Hub API')
     .setDescription('RESTful API for sharing and rating Counter-Strike 2 smoke grenade strategies')
     .setVersion('1.0')
     .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT', name: 'JWT', description: 'Enter JWT token', in: 'header' }, 'JWT-auth')
