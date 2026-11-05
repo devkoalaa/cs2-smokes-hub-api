@@ -57,8 +57,9 @@ iniciada pode terminar. Partidas processadas permanecem no histórico pessoal.
 Não há promessa de recuperar todo o passado: a Valve precisa ainda ter a demo.
 Esta versão trata partidas completas de 10 jogadores; Wingman, partidas
 incompletas e formatos incompatíveis não são publicados como resultados válidos.
-A compatibilidade com uma partida real recente deve ser validada após configurar
-os acessos. KAST, clutches, trades, rating proprietário e replay 2D não fazem parte
+O parser foi validado com uma demo real de Inferno: 10 jogadores, 21 rounds e
+K/D/A conferidos com o placar do Game Coordinator. O fluxo automático completo
+ainda precisa ser validado após configurar a conta dedicada e os códigos. KAST, clutches, trades, rating proprietário e replay 2D não fazem parte
 desta primeira versão. Os testes sintéticos não substituem essa validação real.
 
 ## Validação
@@ -78,3 +79,12 @@ simultâneas no banco antigo e no novo. O banco novo entra no pg-backup.timer.
 
 Referências: https://github.com/DoctorMcKay/node-globaloffensive e
 https://github.com/LaihoE/demoparser.
+
+## Estado da migração — 05/11/2026
+
+Neon restaurado no koala: 4 usuários, 7 mapas, 15 smokes, 9 avaliações e
+3 denúncias; conteúdo integral das tabelas conferido por assinaturas. Backup
+privado em `~/apps/cs2-smokes-hub-api/migration-backup/`. Neon preservado para
+retorno. URLs antigas da Vercel redirecionam ao koala; novos builds Vercel
+desativados em `vercel.json`. Deploy e monitoramento via GitHub Actions e bot.
+Coletor mantido pausado por escolha do proprietário, aguardando conta dedicada.
