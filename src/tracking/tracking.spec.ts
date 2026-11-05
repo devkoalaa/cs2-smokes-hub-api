@@ -3,6 +3,7 @@ import { ForbiddenException, NotFoundException, ServiceUnavailableException } fr
 import { allowedSteamIds, decryptAuthCode, encryptAuthCode, matchShareKey, validShareKey } from './tracking.crypto';
 import { summarize } from './tracking.metrics';
 import { TrackingService } from './tracking.service';
+import { AccessService } from './tracking.access';
 import { demoUrl, nextShareCode, matchRoster } from './worker/steam';
 
 describe('Placares Valve 5×5 e Duplas', () => {
@@ -44,14 +45,16 @@ describe('Proteção e cálculo do rastreamento', () => {
     expect(summarize([]).winRate).toBeNull();
     expect(summarize([{ ...row, deaths: 0 }]).kd).toBeNull();
   });
-  it('restringe acesso ao grupo e falha fechado sem configuração', async () => {
-    const db = { trackedMatch: { findFirst: jest.fn().mockResolvedValue(null) } } as any;
-    const config = new ConfigService({ TRACKING_ALLOWED_STEAM_IDS: '76561198143147452' });
-    const service = new TrackingService(db, config);
-    expect(() => service.assertAccess('76561198132822021')).toThrow(ForbiddenException);
-    expect(() => new TrackingService(db, new ConfigService()).assertAccess('76561198143147452')).toThrow(ServiceUnavailableException);
-    await expect(service.detail('76561198143147452', 7)).rejects.toThrow(NotFoundException);
-    expect(db.trackedMatch.findFirst.mock.calls[0][0].where.players.some.steamId).toBe('76561198143147452');
+  it('fecha as partidas para quem não tem acesso e libera fundador na primeira visita', async () => {
+    const founder = '76561198143147452';
+    const db = { user: { update: jest.fn() }, trackedMatch: { findFirst: jest.fn().mockResolvedValue(null) } } as any;
+    const config = new ConfigService({ TRACKING_ALLOWED_STEAM_IDS: founder });
+    const access = new AccessService(db, config);
+    const service = new TrackingService(db, config, access);
+    await expect(service.detail({ id: 2, steamId: '76561198132822021', accessGrantedAt: null }, 7)).rejects.toThrow(ForbiddenException);
+    await expect(service.detail({ id: 1, steamId: founder, accessGrantedAt: null }, 7)).rejects.toThrow(NotFoundException);
+    expect(db.user.update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 1 } }));
+    expect(db.trackedMatch.findFirst.mock.calls[0][0].where.players.some.steamId).toBe(founder);
     expect(allowedSteamIds('invalid,76561198143147452,76561198143147452')).toHaveLength(1);
   });
   it('link compartilhável exige a chave da própria partida', async () => {
@@ -62,8 +65,10 @@ describe('Proteção e cálculo do rastreamento', () => {
     const group = '76561198143147452', other = '76561198000000001';
     const player = { kills: 20, deaths: 10, assists: 3, headshots: 10, damage: 2100, rounds: 21, scoreFor: 13, scoreAgainst: 8 };
     const db = { trackedMatch: { findFirst: jest.fn().mockResolvedValue({ id: 7, mode: 'competitive', map: 'de_mirage', playedAt: new Date(0), rounds: 21,
-      players: [{ ...player, steamId: group, name: 'koala', team: 0 }, { ...player, steamId: other, name: 'rival', team: 1, scoreFor: 8, scoreAgainst: 13 }] }) } } as any;
-    const service = new TrackingService(db, new ConfigService({ TRACKING_ALLOWED_STEAM_IDS: group, TRACKING_ENCRYPTION_KEY: key }));
+      players: [{ ...player, steamId: group, name: 'koala', team: 0 }, { ...player, steamId: other, name: 'rival', team: 1, scoreFor: 8, scoreAgainst: 13 }] }) },
+      user: { findMany: jest.fn().mockResolvedValue([{ steamId: group }]) }, matchShare: { findFirst: jest.fn().mockResolvedValue(null) } } as any;
+    const config = new ConfigService({ TRACKING_ALLOWED_STEAM_IDS: group, TRACKING_ENCRYPTION_KEY: key });
+    const service = new TrackingService(db, config, new AccessService(db, config));
     await expect(service.preview(7, 'f'.repeat(16))).rejects.toThrow(NotFoundException);
     expect(db.trackedMatch.findFirst).not.toHaveBeenCalled();
     const preview = await service.preview(7, matchShareKey(7, key));

@@ -1,16 +1,28 @@
-# Partidas do grupo
+# Partidas (beta fechado, grupos e privacidade)
 
-O frontend chama `/tracking` com o JWT já emitido pelo login Steam. O acesso é
-restrito aos SteamIDs em `TRACKING_ALLOWED_STEAM_IDS`. Comparações incluem apenas
-membros que ativaram o rastreamento; placares completos só são acessíveis aos
-participantes da partida. As estatísticas existentes de smokes não mudam.
+O frontend chama `/tracking` com o JWT do login Steam. As partidas ficam abertas
+para quem tem acesso (`users.accessGrantedAt`):
 
-Cada partida tem uma página própria, `/partidas/<id>-<chave>`. A chave é um
-HMAC curto derivado de `TRACKING_ENCRYPTION_KEY`. Com ela, a rota pública
-`/tracking/preview/<id>/<chave>` devolve só o necessário para a miniatura do
-link: mapa, data, placar e os números de quem é do grupo. O número sequencial
-sozinho não abre nada, e o placar completo continua exigindo login de um
-participante.
+- **Fundadores** (`TRACKING_ALLOWED_STEAM_IDS`) ganham acesso na primeira visita,
+  fora do limite de vagas, e recebem o resumo de cada partida por DM no Discord
+  (Clodoaldo). Os comandos `/cs2` do Clodoaldo também só falam deles.
+- **Os demais** entram por um link `/convite/<código>`: convite de grupo (qualquer
+  membro copia, o dono troca) ou convite de acesso (criado por admin em `/grupos`,
+  com número de usos). Quem entra ocupa uma vaga até `TRACKING_MAX_USERS` (30).
+- **Admins** (`TRACKING_ADMIN_STEAM_IDS`) veem as vagas, geram convites de acesso e
+  tiram o acesso de alguém (a importação dessa pessoa é desligada).
+
+Privacidade: histórico e placar completo só para quem jogou a partida; perfil
+(`/perfil/<steamid>`), ranking e "jogaram juntos" (`/grupos/<id>`) só para quem
+divide algum grupo. Não há perfil público. Limites: 10 grupos por pessoa,
+20 pessoas por grupo. "Excluir meus dados" (perfil) desliga a importação, apaga os
+grupos criados pela pessoa, tira dos outros, apaga links e convites, libera a vaga e
+remove as partidas que só ela importou e em que nenhum outro usuário com acesso jogou.
+
+Link de partida: `/partidas/<id>-<código>`, um código por pessoa (`match_shares`). A
+miniatura mostra quem compartilhou e quem divide grupo com ela, se `allowPreview`
+estiver ligado no perfil. Links antigos (chave HMAC de 16 hex) continuam valendo e
+mostram os fundadores.
 
 ## Fluxo
 

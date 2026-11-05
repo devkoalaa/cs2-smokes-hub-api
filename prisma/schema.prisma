@@ -20,6 +20,14 @@ model User {
 
   tracking MatchTracking?
   matchRequests MatchRequest[]
+  // Beta fechado: acesso às partidas por convite (fundadores entram sozinhos).
+  accessGrantedAt DateTime?
+  // Aparecer nas miniaturas dos links compartilhados por mim ou pelos meus grupos.
+  allowPreview Boolean @default(true)
+  groups GroupMember[]
+  ownedGroups Group[]
+  invites Invite[]
+  shares MatchShare[]
 
   smokes  Smoke[]
   ratings Rating[]
@@ -144,6 +152,7 @@ model TrackedMatch {
   updatedAt DateTime @updatedAt
   players MatchPlayer[]
   requests MatchRequest[]
+  shares MatchShare[]
   @@index([status, retryAt])
   @@map("tracked_matches")
 }
@@ -187,4 +196,57 @@ enum MatchImportStatus {
   PROCESSING
   READY
   FAILED
+}
+
+model Group {
+  id        Int      @id @default(autoincrement())
+  name      String
+  ownerId   Int
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  members   GroupMember[]
+  invites   Invite[]
+  @@map("groups")
+}
+
+model GroupMember {
+  groupId  Int
+  userId   Int
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt DateTime @default(now())
+  @@id([groupId, userId])
+  @@index([userId])
+  @@map("group_members")
+}
+
+// Link /convite/<code>: entrar num grupo (GROUP) ou só ganhar acesso (ACCESS, criado por admin).
+model Invite {
+  code        String     @id
+  kind        InviteKind
+  groupId     Int?
+  group       Group?     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdById Int
+  createdBy   User       @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  usesLeft    Int?
+  createdAt   DateTime   @default(now())
+  @@index([groupId])
+  @@map("invites")
+}
+
+enum InviteKind {
+  ACCESS
+  GROUP
+}
+
+// Link compartilhado de uma partida: a miniatura mostra quem compartilhou e os grupos dele.
+model MatchShare {
+  code      String       @id
+  matchId   Int
+  userId    Int
+  match     TrackedMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now())
+  @@unique([matchId, userId])
+  @@map("match_shares")
 }

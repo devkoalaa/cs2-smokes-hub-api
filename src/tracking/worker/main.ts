@@ -9,13 +9,16 @@ import { parseMatch } from './demo';
 const ANALYSIS_VERSION = 3;
 const db = new PrismaClient();
 const gc = new SteamCoordinator();
+// Fundadores: acesso automático e resumo da partida por DM no Discord (Clodoaldo).
 const allowed = allowedSteamIds(process.env.TRACKING_ALLOWED_STEAM_IDS);
+// Quem pode ter partidas importadas: quem ganhou acesso pelo beta, além dos fundadores.
+const withAccess = { OR: [{ accessGrantedAt: { not: null } }, { steamId: { in: allowed } }] };
 let stopped = false;
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const safeMessage = (error: unknown) => error instanceof CollectorError ? error.publicMessage : 'Falha temporária no processamento. Verifique o coletor.';
 
 async function discover() {
-  const accounts = await db.matchTracking.findMany({ where: { enabled: true, nextPollAt: { lte: new Date() }, user: { steamId: { in: allowed } } }, include: { user: true } });
+  const accounts = await db.matchTracking.findMany({ where: { enabled: true, nextPollAt: { lte: new Date() }, user: withAccess }, include: { user: true } });
   for (const account of accounts) {
     if (stopped) break;
     try {
@@ -42,7 +45,7 @@ async function discover() {
 
 async function processOne() {
   const job = await db.trackedMatch.findFirst({ where: { status: 'PENDING', retryAt: { lte: new Date() },
-    requests: { some: { user: { steamId: { in: allowed }, tracking: { enabled: true } } } } }, orderBy: { retryAt: 'asc' } });
+    requests: { some: { user: { ...withAccess, tracking: { enabled: true } } } } }, orderBy: { retryAt: 'asc' } });
   if (!job) return;
   const claimed = await db.trackedMatch.updateMany({ where: { id: job.id, status: 'PENDING' }, data: { status: 'PROCESSING', attempts: { increment: 1 } } });
   if (!claimed.count) return;
@@ -71,13 +74,13 @@ async function processOne() {
 
 async function main() {
   trackingKey(process.env.TRACKING_ENCRYPTION_KEY!);
-  if (!allowed.length || !process.env.STEAM_API_KEY || (!process.env.STEAM_BOT_REFRESH_TOKEN && (!process.env.STEAM_BOT_USERNAME || !process.env.STEAM_BOT_PASSWORD))) {
-    throw new CollectorError('Configure a lista do grupo, a chave da API e a conta Steam do coletor.');
+  if (!process.env.STEAM_API_KEY || (!process.env.STEAM_BOT_REFRESH_TOKEN && (!process.env.STEAM_BOT_USERNAME || !process.env.STEAM_BOT_PASSWORD))) {
+    throw new CollectorError('Configure a chave da API e a conta Steam do coletor.');
   }
   await db.$connect();
   await gc.connect();
   if (process.argv.includes('--backfill')) {
-    const matches = await db.trackedMatch.findMany({ where: { status: 'READY', players: { some: { steamId: { in: allowed } } } }, select: { id: true, shareCode: true, analysis: true } });
+    const matches = await db.trackedMatch.findMany({ where: { status: 'READY' }, select: { id: true, shareCode: true, analysis: true } });
     for (const match of matches.filter(m => !m.analysis || typeof m.analysis !== 'object' || !('version' in m.analysis) || m.analysis.version !== ANALYSIS_VERSION)) {
       try {
         const parsed = await parseMatch(await gc.match(match.shareCode));
