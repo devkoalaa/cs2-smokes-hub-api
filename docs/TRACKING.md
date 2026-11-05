@@ -5,6 +5,13 @@ restrito aos SteamIDs em `TRACKING_ALLOWED_STEAM_IDS`. Comparações incluem ape
 membros que ativaram o rastreamento; placares completos só são acessíveis aos
 participantes da partida. As estatísticas existentes de smokes não mudam.
 
+Cada partida tem uma página própria, `/partidas/<id>-<chave>`. A chave é um
+HMAC curto derivado de `TRACKING_ENCRYPTION_KEY`. Com ela, a rota pública
+`/tracking/preview/<id>/<chave>` devolve só o necessário para a miniatura do
+link: mapa, data, placar e os números de quem é do grupo. O número sequencial
+sozinho não abre nada, e o placar completo continua exigindo login de um
+participante.
+
 ## Fluxo
 
 1. Cada jogador configura seu Game Authentication Code e um share code recente.
