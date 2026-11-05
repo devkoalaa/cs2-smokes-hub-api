@@ -35,7 +35,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
   private buildErrorResponse(exception: unknown, request: Request): ErrorResponse {
     const timestamp = new Date().toISOString();
-    const path = request.url;
+    const path = request.path;
 
     // Handle HTTP exceptions (including validation errors)
     if (exception instanceof HttpException) {
@@ -227,7 +227,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     request: Request,
     errorResponse: ErrorResponse,
   ): void {
-    const { method, url, ip, headers } = request;
+    const { method, ip, headers } = request;
+    const url = request.path;
     const userAgent = headers['user-agent'] || 'Unknown';
     
     const logContext = {

@@ -17,6 +17,7 @@ async function bootstrap(): Promise<INestApplication> {
   const app = await NestFactory.create(
     AppModule,
     new ExpressAdapter(expressApp),
+    { logger: process.env.NODE_ENV === 'production' ? ['error', 'warn', 'log'] : undefined },
   );
 
   app.enableCors({
