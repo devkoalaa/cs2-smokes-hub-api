@@ -29,12 +29,15 @@ services:
       target: collector
       args:
         GIT_COMMIT_SHA: ${GIT_COMMIT_SHA:-local}
+    volumes:
+      - /home/ubuntu/apps/clodoaldo/cs2-summaries:/summaries
     image: cs2-smokes-collector:latest
     container_name: cs2-smokes-collector
     restart: unless-stopped
     env_file: ${CS2_API_ENV_FILE:-.env}
     environment:
       TZ: America/Sao_Paulo
+      CS2_SUMMARY_DIR: /summaries
     networks: [db]
     profiles: [tracking]
     mem_limit: 2g

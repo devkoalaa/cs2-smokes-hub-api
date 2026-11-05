@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { allowedSteamIds, decryptAuthCode, trackingKey } from '../tracking.crypto';
 import { CollectorError, nextShareCode, SteamCoordinator } from './steam';
+import { queueSummaries } from './summaries';
 import { parseMatch } from './demo';
 
 const db = new PrismaClient();
@@ -51,7 +52,7 @@ async function processOne() {
     if (!valid.length) throw new CollectorError('A partida inicial não pertence a nenhum dos jogadores solicitantes.', true);
     await db.$transaction(async tx => {
       await tx.matchPlayer.deleteMany({ where: { matchId: job.id } });
-      await tx.trackedMatch.update({ where: { id: job.id }, data: { status: 'READY', lastError: null, valveMatchId: String(info.matchid),
+      await tx.trackedMatch.update({ where: { id: job.id }, data: { status: 'READY', summaryPending: !!process.env.CS2_SUMMARY_DIR, lastError: null, valveMatchId: String(info.matchid),
         analysis: parsed.analysis ?? undefined, playedAt: new Date(info.matchtime * 1000), mode: parsed.mode, map: parsed.map, rounds: parsed.rounds, scoreA: parsed.scoreA, scoreB: parsed.scoreB,
         players: { create: parsed.players } } });
     });
@@ -97,6 +98,9 @@ async function main() {
       await db.trackedMatch.updateMany({ where: { status: 'PROCESSING', updatedAt: { lt: new Date(Date.now() - 900000) } }, data: { status: 'PENDING' } });
       await discover();
       await processOne();
+      if (process.env.CS2_SUMMARY_DIR) {
+        await queueSummaries(db, allowed, process.env.CS2_SUMMARY_DIR).catch(() => console.warn('Fila de resumos indisponível; nova tentativa no próximo ciclo.'));
+      }
       if (process.argv.includes('--once')) break;
       await delay(10000);
     } while (!stopped);
