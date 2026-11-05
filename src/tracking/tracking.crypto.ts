@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
+import { createCipheriv, createDecipheriv, createHmac, randomBytes, timingSafeEqual } from 'crypto';
 
 export function trackingKey(value: string): Buffer {
   if (!/^[a-f\d]{64}$/i.test(value || '')) throw new Error('TRACKING_ENCRYPTION_KEY deve conter 64 caracteres hexadecimais.');
@@ -24,4 +24,16 @@ export function decryptAuthCode(value: string, key: string, userId: number): str
 
 export function allowedSteamIds(value: string): string[] {
   return [...new Set((value || '').split(',').map(x => x.trim()).filter(x => /^7656119\d{10}$/.test(x)))];
+}
+
+// Chave curta do link compartilhável: sem ela o número sequencial da partida
+// não basta para ver a miniatura pública.
+export function matchShareKey(id: number, key: string): string {
+  return createHmac('sha256', trackingKey(key)).update(`match-share:${id}`).digest('hex').slice(0, 16);
+}
+
+export function validShareKey(id: number, candidate: string, key: string): boolean {
+  const expected = Buffer.from(matchShareKey(id, key));
+  const given = Buffer.from(candidate || '');
+  return given.length === expected.length && timingSafeEqual(given, expected);
 }

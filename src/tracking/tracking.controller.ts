@@ -5,6 +5,13 @@ import { ConfigureTrackingDto, MatchQueryDto } from './tracking.dto';
 import { TrackingService } from './tracking.service';
 
 @ApiTags('partidas')
+@Controller('tracking/preview')
+export class TrackingPreviewController {
+  constructor(private readonly service: TrackingService) {}
+  @Get(':id/:key') preview(@Param('id', ParseIntPipe) id: number, @Param('key') key: string) { return this.service.preview(id, key); }
+}
+
+@ApiTags('partidas')
 @ApiBearerAuth('JWT-auth')
 @UseGuards(JwtAuthGuard)
 @Controller('tracking')

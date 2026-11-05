@@ -2,7 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException, ServiceUnavailableEx
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { allowedSteamIds, encryptAuthCode, trackingKey } from './tracking.crypto';
+import { allowedSteamIds, encryptAuthCode, matchShareKey, trackingKey, validShareKey } from './tracking.crypto';
 import { ConfigureTrackingDto, MatchQueryDto } from './tracking.dto';
 import { summarize } from './tracking.metrics';
 
@@ -10,6 +10,9 @@ import { summarize } from './tracking.metrics';
 export class TrackingService {
   constructor(private readonly db: PrismaService, private readonly config: ConfigService) {}
 
+  private shareKey(id: number) {
+    try { return matchShareKey(id, this.config.get<string>('TRACKING_ENCRYPTION_KEY')); } catch { return null; }
+  }
   private ids() { return allowedSteamIds(this.config.get<string>('TRACKING_ALLOWED_STEAM_IDS')); }
   assertAccess(steamId: string) {
     const ids = this.ids();
@@ -71,7 +74,7 @@ export class TrackingService {
       stats: summarize(await this.db.matchPlayer.findMany({ where: { steamId: member.steamId, match: this.where(member.steamId, query) } })) })));
     return { summary: summarize(rows), comparison, maps: maps.map(m => m.map).filter(Boolean).sort(), total, page: query.page,
       evolution: rows.slice(-30).map(row => ({ id: row.matchId, playedAt: row.match.playedAt, adr: row.damage === null || !row.rounds ? null : Math.round(row.damage / row.rounds * 100) / 100 })),
-      matches: matches.map(({ players, ...match }) => ({ ...match, player: players[0] })) };
+      matches: matches.map(({ players, ...match }) => ({ ...match, shareKey: this.shareKey(match.id), player: players[0] })) };
   }
 
   async detail(steamId: string, id: number) {
@@ -79,6 +82,20 @@ export class TrackingService {
     const match = await this.db.trackedMatch.findFirst({ where: { id, status: 'READY', players: { some: { steamId } } },
       select: { id: true, mode: true, map: true, playedAt: true, rounds: true, analysis: true, players: { orderBy: [{ team: 'asc' }, { kills: 'desc' }] } } });
     if (!match) throw new NotFoundException('Partida não encontrada no seu histórico.');
-    return match;
+    return { ...match, shareKey: this.shareKey(match.id) };
+  }
+
+  // Resumo público para a miniatura do link: só o placar e os números do grupo.
+  async preview(id: number, key: string) {
+    let valid = false;
+    try { valid = validShareKey(id, key, this.config.get<string>('TRACKING_ENCRYPTION_KEY')); } catch { valid = false; }
+    const match = valid && await this.db.trackedMatch.findFirst({ where: { id, status: 'READY' },
+      select: { id: true, mode: true, map: true, playedAt: true, rounds: true, players: { orderBy: [{ team: 'asc' }, { kills: 'desc' }] } } });
+    if (!match) throw new NotFoundException('Partida não encontrada.');
+    const ids = this.ids();
+    const score = [0, 1].map(team => match.players.find(p => p.team === team)?.scoreFor ?? 0);
+    return { id: match.id, mode: match.mode, map: match.map, playedAt: match.playedAt, rounds: match.rounds, score,
+      group: match.players.filter(p => ids.includes(p.steamId)).map(p => ({ name: p.name, team: p.team, kills: p.kills, deaths: p.deaths, assists: p.assists,
+        adr: p.damage == null || !p.rounds ? null : Math.round(p.damage / p.rounds), hsPercent: p.headshots == null || !p.kills ? null : Math.round(p.headshots / p.kills * 100) })) };
   }
 }
