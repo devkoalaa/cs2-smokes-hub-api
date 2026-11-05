@@ -1,6 +1,7 @@
 import { BadRequestException, Body, Controller, Delete, ForbiddenException, Get, Injectable, NotFoundException, Param, ParseIntPipe,
   Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { User } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PrismaService } from '../prisma/prisma.service';
@@ -164,6 +165,7 @@ export class GroupsService {
 @Controller('tracking/groups')
 export class GroupsController {
   constructor(private readonly service: GroupsService) {}
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post() create(@Req() req: any, @Body() dto: GroupNameDto) { return this.service.create(req.user, dto.name); }
   @Get(':id') group(@Req() req: any, @Param('id', ParseIntPipe) id: number, @Query() query: PeriodDto) { return this.service.group(req.user, id, query.days); }
   @Patch(':id') rename(@Req() req: any, @Param('id', ParseIntPipe) id: number, @Body() dto: GroupNameDto) { return this.service.rename(req.user, id, dto.name); }
@@ -189,6 +191,7 @@ export class InvitesController {
   constructor(private readonly service: GroupsService) {}
   @Get(':code') info(@Param('code') code: string) { return this.service.inviteInfo(code); }
   @ApiBearerAuth('JWT-auth') @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post(':code/accept') accept(@Req() req: any, @Param('code') code: string) { return this.service.accept(req.user, code); }
 }
 

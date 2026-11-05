@@ -1,6 +1,9 @@
 import { TrackingModule } from './tracking/tracking.module';
 import { HealthController } from './health.controller';
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { AppThrottlerGuard } from './common/throttler.guard';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -29,12 +32,15 @@ function validate(config: Record<string, unknown>) {
 
 @Module({
   controllers: [HealthController],
+  providers: [{ provide: APP_GUARD, useClass: AppThrottlerGuard }],
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
       validate,
     }),
+    // Limite por IP (o Caddy informa o IP real; ver trust proxy no main.ts).
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
     PrismaModule,
     AuthModule,
     MapsModule,

@@ -14,17 +14,22 @@ async function bootstrap(): Promise<INestApplication> {
   }
 
   const expressApp = express();
+  expressApp.disable('x-powered-by');
+  // Atrás do Caddy (rede Docker): o IP real vem no X-Forwarded-For, usado no limite de requisições.
+  expressApp.set('trust proxy', 'loopback, uniquelocal');
   const app = await NestFactory.create(
     AppModule,
     new ExpressAdapter(expressApp),
     { logger: process.env.NODE_ENV === 'production' ? ['error', 'warn', 'log'] : undefined },
   );
 
+  // O login usa token no cabeçalho (sem cookie): só o próprio site chama a API pelo navegador.
+  const origins = (process.env.CORS_ORIGINS || 'https://cs2.devkoala.com').split(',').map(o => o.trim()).filter(Boolean);
   app.enableCors({
-    origin: true,
+    origin: origins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
+    maxAge: 600,
   });
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalPipes(new ValidationPipe({
@@ -42,8 +47,11 @@ async function bootstrap(): Promise<INestApplication> {
     .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT', name: 'JWT', description: 'Enter JWT token', in: 'header' }, 'JWT-auth')
     .addTag('auth').addTag('maps').addTag('smokes').addTag('ratings').addTag('reports')
     .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('/api-docs', app, document, { swaggerOptions: { persistAuthorization: true } });
+  // Documentação só fora de produção (ou com SWAGGER_ENABLED=true).
+  if (process.env.NODE_ENV !== 'production' || process.env.SWAGGER_ENABLED === 'true') {
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('/api-docs', app, document, { swaggerOptions: { persistAuthorization: true } });
+  }
 
   await app.init();
   cachedApp = app;

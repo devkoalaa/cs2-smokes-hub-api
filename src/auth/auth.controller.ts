@@ -9,6 +9,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import {
   ApiTags,
@@ -78,6 +79,7 @@ export class AuthController {
     description: 'Authentication failed',
   })
   @ApiExcludeEndpoint()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Get('steam/return')
   @UseGuards(AuthGuard('steam'))
   async steamAuthCallback(@Req() req: Request, @Res() res: Response) {
@@ -114,10 +116,8 @@ export class AuthController {
       }
       
       // For other errors, wrap them
-      throw new HttpException(
-        'Authentication failed: ' + error.message,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      console.error('Falha no login Steam:', error);
+      throw new HttpException('Não foi possível concluir o login. Tente de novo.', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

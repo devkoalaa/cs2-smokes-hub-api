@@ -7,7 +7,7 @@ describe('DTOs Validation', () => {
     it('should validate a valid CreateSmokeDto', async () => {
       const dto = plainToClass(CreateSmokeDto, {
         title: 'Test Smoke',
-        videoUrl: 'https://example.com/video.mp4',
+        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         timestamp: 30,
         x_coord: 100.5,
         y_coord: 200.7,
@@ -16,6 +16,13 @@ describe('DTOs Validation', () => {
 
       const errors = await validate(dto);
       expect(errors).toHaveLength(0);
+    });
+
+    it('só aceita vídeo do YouTube (o site embute num iframe)', async () => {
+      for (const videoUrl of ['https://example.com/video.mp4', 'https://youtube.com.evil.test/watch?v=dQw4w9WgXcQ', 'javascript:alert(1)']) {
+        const dto = plainToClass(CreateSmokeDto, { title: 'Teste', videoUrl, timestamp: 30, x_coord: 1, y_coord: 2, mapId: 1 });
+        expect((await validate(dto)).map(e => e.property)).toContain('videoUrl');
+      }
     });
 
     it('should fail validation for invalid data', async () => {

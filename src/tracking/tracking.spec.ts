@@ -46,23 +46,23 @@ describe('Proteção e cálculo do rastreamento', () => {
     expect(summarize([{ ...row, deaths: 0 }]).kd).toBeNull();
   });
   it('fecha as partidas para quem não tem acesso e libera fundador na primeira visita', async () => {
-    const founder = '76561198143147452';
+    const founder = '76561198000000010';
     const db = { user: { update: jest.fn() }, trackedMatch: { findFirst: jest.fn().mockResolvedValue(null) } } as any;
     const config = new ConfigService({ TRACKING_ALLOWED_STEAM_IDS: founder });
     const access = new AccessService(db, config);
     const service = new TrackingService(db, config, access);
-    await expect(service.detail({ id: 2, steamId: '76561198132822021', accessGrantedAt: null }, 7)).rejects.toThrow(ForbiddenException);
+    await expect(service.detail({ id: 2, steamId: '76561198000000030', accessGrantedAt: null }, 7)).rejects.toThrow(ForbiddenException);
     await expect(service.detail({ id: 1, steamId: founder, accessGrantedAt: null }, 7)).rejects.toThrow(NotFoundException);
     expect(db.user.update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 1 } }));
     expect(db.trackedMatch.findFirst.mock.calls[0][0].where.players.some.steamId).toBe(founder);
-    expect(allowedSteamIds('invalid,76561198143147452,76561198143147452')).toHaveLength(1);
+    expect(allowedSteamIds('invalid,76561198000000010,76561198000000010')).toHaveLength(1);
   });
   it('link compartilhável exige a chave da própria partida', async () => {
     expect(matchShareKey(7, key)).toMatch(/^[a-f0-9]{16}$/);
     expect(validShareKey(7, matchShareKey(7, key), key)).toBe(true);
     expect(validShareKey(8, matchShareKey(7, key), key)).toBe(false);
     expect(validShareKey(7, '', key)).toBe(false);
-    const group = '76561198143147452', other = '76561198000000001';
+    const group = '76561198000000010', other = '76561198000000001';
     const player = { kills: 20, deaths: 10, assists: 3, headshots: 10, damage: 2100, rounds: 21, scoreFor: 13, scoreAgainst: 8 };
     const db = { trackedMatch: { findFirst: jest.fn().mockResolvedValue({ id: 7, mode: 'competitive', map: 'de_mirage', playedAt: new Date(0), rounds: 21,
       players: [{ ...player, steamId: group, name: 'koala', team: 0 }, { ...player, steamId: other, name: 'rival', team: 1, scoreFor: 8, scoreAgainst: 13 }] }) },
@@ -115,7 +115,7 @@ describe('Integração com o Clodoaldo', () => {
     expect(() => new BotTokenGuard(new ConfigService({})).canActivate(context(`Bearer ${token}`))).toThrow(ServiceUnavailableException);
   });
   it('só responde sobre o grupo e mostra só companheiros do grupo', async () => {
-    const me = '76561198143147452', friend = '76561198132822021', stranger = '76561198000000001';
+    const me = '76561198000000010', friend = '76561198000000030', stranger = '76561198000000001';
     const base = { assists: 2, headshots: 5, damage: 1500, rounds: 20, scoreFor: 13, scoreAgainst: 7, kills: 10, deaths: 8 };
     const match = { id: 3, map: 'de_nuke', mode: 'competitive', playedAt: new Date(0), rounds: 20, analysis: null, players: [
       { ...base, steamId: me, name: 'koala', team: 0 }, { ...base, steamId: friend, name: 'Moacir', team: 0 },

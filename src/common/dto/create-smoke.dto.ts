@@ -1,4 +1,4 @@
-import { IsString, IsUrl, IsNumber, IsPositive, Length, IsInt, IsEnum, IsOptional } from 'class-validator';
+import { IsString, IsNumber, IsPositive, Length, IsInt, IsEnum, IsOptional, Matches, MaxLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export enum SmokeType {
@@ -15,7 +15,10 @@ export class CreateSmokeDto {
   title: string;
 
   @ApiProperty({ description: 'Demonstration video URL', example: 'https://youtu.be/dQw4w9WgXcQ' })
-  @IsUrl({}, { message: 'A URL do vídeo deve ser uma URL válida' })
+  // Só YouTube: o site embute o vídeo num iframe, e qualquer outro endereço viraria uma página de terceiros dentro do CS2 Hub.
+  @IsString()
+  @MaxLength(300)
+  @Matches(/^https:\/\/(www\.|m\.)?(youtube\.com\/(watch\?(.*&)?v=|shorts\/|embed\/)|youtu\.be\/)[\w-]{6,}/, { message: 'Use um link de vídeo do YouTube (youtube.com ou youtu.be).' })
   videoUrl: string;
 
   @ApiProperty({ description: 'Timestamp in seconds within the video', example: 42 })

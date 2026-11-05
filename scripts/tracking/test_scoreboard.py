@@ -3,11 +3,11 @@ from parse_demo import scoreboard
 
 class ScoreboardTests(unittest.TestCase):
     def setUp(self):
-        self.roster = {'scores': [13, 7], 'players': [{'steamId': '76561198143147452', 'team': 0, 'kills': 20, 'deaths': 10, 'assists': 3}]}
-        self.rows = [{'steamid': '76561198143147452', 'name': 'koala', 'kills_total': 20, 'deaths_total': 10, 'assists_total': 3, 'damage_total': 1700, 'headshot_kills_total': 8}]
+        self.roster = {'scores': [13, 7], 'players': [{'steamId': '76561198000000010', 'team': 0, 'kills': 20, 'deaths': 10, 'assists': 3}]}
+        self.rows = [{'steamid': '76561198000000010', 'name': 'koala', 'kills_total': 20, 'deaths_total': 10, 'assists_total': 3, 'damage_total': 1700, 'headshot_kills_total': 8}]
     def test_preserves_steamid_and_score(self):
         row = scoreboard(self.rows, self.roster)[0]
-        self.assertEqual(row['steamId'], '76561198143147452')
+        self.assertEqual(row['steamId'], '76561198000000010')
         self.assertEqual(row['rounds'], 20)
         self.assertEqual(row['scoreFor'], 13)
     def test_rejects_partial_demo(self):

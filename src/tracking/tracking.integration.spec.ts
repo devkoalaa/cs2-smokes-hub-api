@@ -9,7 +9,8 @@ import { TrackingService } from './tracking.service';
 // Só roda com TEST_DATABASE_URL (banco descartável: as tabelas são esvaziadas).
 const url = process.env.TEST_DATABASE_URL;
 (url ? describe : describe.skip)('Beta fechado, grupos e privacidade (Postgres)', () => {
-  const db = new PrismaClient({ datasources: { db: { url } } }) as any;
+  // O Jest executa o corpo do describe mesmo quando pula: sem banco, nada de cliente.
+  const db = (url ? new PrismaClient({ datasources: { db: { url } } }) : {}) as any;
   const F1 = '76561198000000001';
   const config = new ConfigService({ TRACKING_ALLOWED_STEAM_IDS: F1, TRACKING_ADMIN_STEAM_IDS: F1, TRACKING_MAX_USERS: '3', TRACKING_ENCRYPTION_KEY: 'ab'.repeat(32) });
   const access = new AccessService(db, config);
@@ -24,7 +25,7 @@ const url = process.env.TEST_DATABASE_URL;
       users[name] = await db.user.create({ data: { steamId: name === 'F1' ? F1 : `7656119800000010${i}`, username: name } });
     }
   });
-  afterAll(() => db.$disconnect());
+  afterAll(() => db.$disconnect?.());
 
   let groupId: number, invite: string;
   it('fundador entra sozinho e cria o grupo com link de convite', async () => {
