@@ -53,6 +53,26 @@ Jobs FAILED ficam visíveis para diagnóstico; não são silenciosamente descart
 Desconectar apaga a credencial e interrompe novas descobertas. Uma análise já
 iniciada pode terminar. Partidas processadas permanecem no histórico pessoal.
 
+## Mapa de abates
+
+Desde a análise versão 3, cada partida guarda a lista de mortes (`analysis.kills`):
+round, tempo desde o fim do freeze time, quem matou, quem morreu, arma,
+headshot, lado de cada um e as coordenadas do jogo (X/Y/Z) dos dois. A página
+da partida desenha isso sobre os radares de `public/images/maps` com a
+calibração de `cs2-smokes/lib/radar.ts` (conferida com mortes reais em Mirage,
+Nuke, Inferno e Ancient; Dust2, Overpass e Train usam os valores oficiais, ainda
+sem conferência; Vertigo e Anubis não têm radar no site).
+
+Partidas de versões antigas são reprocessadas com o coletor parado (uma sessão
+Steam por vez), enquanto a Valve ainda tiver a demo:
+
+```
+docker stop cs2-smokes-collector
+COMPOSE_PROJECT_NAME=cs2-smokes-hub-api docker compose -f compose.production.yml --profile tracking \
+  run --rm --no-deps collector node dist/src/tracking/worker/main.js --backfill
+docker start cs2-smokes-collector
+```
+
 ## Métricas e limites
 
 - K/D = eliminações / mortes; sem mortes, indisponível.
