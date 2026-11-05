@@ -18,6 +18,9 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  tracking MatchTracking?
+  matchRequests MatchRequest[]
+
   smokes  Smoke[]
   ratings Rating[]
   reports Report[]
@@ -104,4 +107,81 @@ enum SmokeType {
   BANG
   MOLOTOV
   STRATEGY
+}
+
+model MatchTracking {
+  userId Int @id
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  authCodeEncrypted String
+  lastShareCode String
+  seedPending Boolean @default(true)
+  enabled Boolean @default(true)
+  revision Int @default(1)
+  nextPollAt DateTime @default(now())
+  lastCheckedAt DateTime?
+  lastError String?
+  updatedAt DateTime @updatedAt
+  @@map("match_tracking")
+}
+
+model TrackedMatch {
+  id Int @id @default(autoincrement())
+  shareCode String @unique
+  valveMatchId String? @unique
+  status MatchImportStatus @default(PENDING)
+  attempts Int @default(0)
+  retryAt DateTime @default(now())
+  lastError String?
+  map String?
+  playedAt DateTime?
+  rounds Int?
+  scoreA Int?
+  scoreB Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  players MatchPlayer[]
+  requests MatchRequest[]
+  @@index([status, retryAt])
+  @@map("tracked_matches")
+}
+
+model MatchRequest {
+  userId Int
+  matchId Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  match TrackedMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  @@id([userId, matchId])
+  @@map("match_requests")
+}
+
+model MatchPlayer {
+  matchId Int
+  steamId String
+  match TrackedMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  name String
+  team Int
+  kills Int
+  deaths Int
+  assists Int
+  headshots Int?
+  damage Int?
+  rounds Int
+  scoreFor Int
+  scoreAgainst Int
+  @@id([matchId, steamId])
+  @@index([steamId])
+  @@map("match_players")
+}
+
+model TrackingWorker {
+  id String @id
+  heartbeatAt DateTime
+  @@map("tracking_worker")
+}
+
+enum MatchImportStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
 }

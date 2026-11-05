@@ -62,6 +62,10 @@ if (require.main === module) {
 }
 
 export default async (req: any, res: any) => {
+  if (process.env.VERCEL === '1') {
+    const path = String(req.url || '/').replace(/^\/+/, '');
+    return res.redirect(307, `https://cs2.devkoala.com/api/${path}`);
+  }
   const app = await bootstrap();
   const expressInstance = app.getHttpAdapter().getInstance();
   expressInstance(req, res);

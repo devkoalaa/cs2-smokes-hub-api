@@ -1,3 +1,5 @@
+import { TrackingModule } from './tracking/tracking.module';
+import { HealthController } from './health.controller';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
@@ -26,6 +28,7 @@ function validate(config: Record<string, unknown>) {
 }
 
 @Module({
+  controllers: [HealthController],
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
@@ -39,6 +42,7 @@ function validate(config: Record<string, unknown>) {
     RatingsModule,
     ReportsModule,
     UsersModule,
+    TrackingModule,
   ],
 })
 export class AppModule {}

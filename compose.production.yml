@@ -1,0 +1,44 @@
+services:
+  migrate:
+    build:
+      context: .
+      target: migrator
+    env_file: ${CS2_API_ENV_FILE:-.env}
+    environment:
+      TZ: America/Sao_Paulo
+    networks: [db]
+    profiles: [migrate]
+  api:
+    build:
+      context: .
+      target: runtime
+      args:
+        GIT_COMMIT_SHA: ${GIT_COMMIT_SHA:-local}
+    image: cs2-smokes-hub-api:latest
+    container_name: cs2-smokes-hub-api
+    restart: unless-stopped
+    env_file: ${CS2_API_ENV_FILE:-.env}
+    environment:
+      TZ: America/Sao_Paulo
+      PORT: 6969
+    ports: ["127.0.0.1:3011:6969"]
+    networks: [db]
+  collector:
+    build:
+      context: .
+      target: collector
+      args:
+        GIT_COMMIT_SHA: ${GIT_COMMIT_SHA:-local}
+    image: cs2-smokes-collector:latest
+    container_name: cs2-smokes-collector
+    restart: unless-stopped
+    env_file: ${CS2_API_ENV_FILE:-.env}
+    environment:
+      TZ: America/Sao_Paulo
+    networks: [db]
+    profiles: [tracking]
+    mem_limit: 2g
+    cpus: 1.5
+networks:
+  db:
+    external: true

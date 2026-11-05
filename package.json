@@ -5,7 +5,7 @@
   "main": "dist/src/main.js",
   "scripts": {
     "build": "prisma generate && nest build",
-    "vercel-build": "prisma generate && prisma migrate deploy && nest build",
+    "vercel-build": "prisma generate && nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -31,7 +31,10 @@
     "db:reset": "prisma migrate reset --force && npm run prisma:seed",
     "db:reset:dev": "prisma migrate reset --force && npm run prisma:seed:dev",
     "db:manage": "ts-node scripts/db-management.ts",
-    "db:deploy": "node -e \"require('child_process').execSync(process.platform === 'win32' ? 'powershell -ExecutionPolicy Bypass -File scripts/deploy-migrations.ps1' : 'bash scripts/deploy-migrations.sh', {stdio: 'inherit'})\""
+    "db:deploy": "node -e \"require('child_process').execSync(process.platform === 'win32' ? 'powershell -ExecutionPolicy Bypass -File scripts/deploy-migrations.ps1' : 'bash scripts/deploy-migrations.sh', {stdio: 'inherit'})\"",
+    "tracker:start": "ts-node src/tracking/worker/main.ts",
+    "tracker:once": "ts-node src/tracking/worker/main.ts --once",
+    "tracker:parse-test": "python -m unittest discover -s scripts/tracking -p \"test_*.py\""
   },
   "keywords": [
     "nestjs",
@@ -58,7 +61,11 @@
     "passport-steam": "^1.0.18",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "globaloffensive": "^3.2.0",
+    "steam-user": "^5.2.0",
+    "globaloffensive-sharecode": "1.1.1",
+    "dotenv": "^16.6.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.10",

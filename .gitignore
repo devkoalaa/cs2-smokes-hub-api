@@ -43,5 +43,7 @@ lerna-debug.log*
 .env.production.local
 
 # Prisma
-/prisma/migrations
+/.venv
+.env.*
+!.env.example
 .vercel

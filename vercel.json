@@ -1,4 +1,7 @@
 {
+  "git": {
+    "deploymentEnabled": true
+  },
   "version": 2,
   "builds": [
     {

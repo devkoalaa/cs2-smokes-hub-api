@@ -1,0 +1,2 @@
+# This directory will contain Prisma migrations
+# Run 'npx prisma migrate dev --name init' to create the initial migration
