@@ -3,7 +3,25 @@ import { ForbiddenException, NotFoundException, ServiceUnavailableException } fr
 import { allowedSteamIds, decryptAuthCode, encryptAuthCode } from './tracking.crypto';
 import { summarize } from './tracking.metrics';
 import { TrackingService } from './tracking.service';
-import { demoUrl, nextShareCode } from './worker/steam';
+import { demoUrl, nextShareCode, matchRoster } from './worker/steam';
+
+describe('Placares Valve 5×5 e Duplas', () => {
+  const match = (ids: number[]) => ({ matchtime: 1, roundstatsall: [{ reservation: { account_ids: ids }, team_scores: [9, 6], kills: [14, 8, 0, 0, 0, 10, 6, 0, 0, 0], deaths: [7, 9, 0, 0, 0, 11, 11, 0, 0, 0], assists: [2, 3, 0, 0, 0, 2, 1, 0, 0, 0] }] });
+  it('ignora slots vazios de Duplas preservando times e índices das estatísticas', () => {
+    const result = matchRoster(match([11, 12, 0, 0, 0, 21, 22, 0, 0, 0]));
+    expect(result.players).toHaveLength(4);
+    expect(result.players.map(p => p.team)).toEqual([0, 0, 1, 1]);
+    expect(result.players.map(p => p.kills)).toEqual([14, 8, 10, 6]);
+    expect(result.players[2].steamId).toBe(String(76561197960265728n + 21n));
+  });
+  it('mantém os dez jogadores de 5×5', () => {
+    expect(matchRoster(match([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])).players).toHaveLength(10);
+  });
+  it('rejeita escalações incompletas ou duplicadas sem publicar estatísticas', () => {
+    expect(() => matchRoster(match([11, 12, 0, 0, 0, 21, 0, 0, 0, 0]))).toThrow();
+    expect(() => matchRoster(match([11, 12, 0, 0, 0, 11, 22, 0, 0, 0]))).toThrow();
+  });
+});
 
 describe('Proteção e cálculo do rastreamento', () => {
   const key = 'ab'.repeat(32);

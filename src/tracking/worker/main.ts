@@ -52,7 +52,7 @@ async function processOne() {
     await db.$transaction(async tx => {
       await tx.matchPlayer.deleteMany({ where: { matchId: job.id } });
       await tx.trackedMatch.update({ where: { id: job.id }, data: { status: 'READY', lastError: null, valveMatchId: String(info.matchid),
-        playedAt: new Date(info.matchtime * 1000), map: parsed.map, rounds: parsed.rounds, scoreA: parsed.scoreA, scoreB: parsed.scoreB,
+        playedAt: new Date(info.matchtime * 1000), mode: parsed.mode, map: parsed.map, rounds: parsed.rounds, scoreA: parsed.scoreA, scoreB: parsed.scoreB,
         players: { create: parsed.players } } });
     });
     console.log(`Partida ${job.id} processada.`);

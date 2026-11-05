@@ -125,6 +125,7 @@ model MatchTracking {
 }
 
 model TrackedMatch {
+  mode String @default("competitive")
   id Int @id @default(autoincrement())
   shareCode String @unique
   valveMatchId String? @unique

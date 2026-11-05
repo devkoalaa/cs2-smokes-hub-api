@@ -86,8 +86,13 @@ export function matchRoster(match: any) {
   }
   const scores = last.team_scores;
   if (!scores.every(n => Number.isInteger(n) && n >= 0) || scores[0] + scores[1] < 1) throw new CollectorError('Placar inválido.', true);
-  return { scores, players: last.reservation.account_ids.map((account: number, i: number) => ({
+  const players = last.reservation.account_ids.map((account: number, i: number) => ({
     steamId: (76561197960265728n + BigInt(account)).toString(), team: i < 5 ? 0 : 1,
     kills: last.kills?.[i], deaths: last.deaths?.[i], assists: last.assists?.[i],
-  })) };
+  })).filter(player => player.steamId !== '76561197960265728');
+  const teamSize = players.filter(player => player.team === 0).length;
+  if (![2, 5].includes(teamSize) || players.length !== teamSize * 2 || new Set(players.map(player => player.steamId)).size !== players.length) {
+    throw new CollectorError('Formato da partida não suportado: esperado 5×5 ou Duplas 2×2.', true);
+  }
+  return { scores, players };
 }

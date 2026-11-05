@@ -55,8 +55,11 @@ iniciada pode terminar. Partidas processadas permanecem no histórico pessoal.
 - Filtro de grupo: todos os IDs configurados no mesmo time.
 
 Não há promessa de recuperar todo o passado: a Valve precisa ainda ter a demo.
-Esta versão trata partidas completas de 10 jogadores; Wingman, partidas
-incompletas e formatos incompatíveis não são publicados como resultados válidos.
+O coletor trata partidas completas de 5×5 e Duplas (Wingman) 2×2. O placar de
+Duplas também tem dez slots no Game Coordinator: seis IDs de conta zero são
+ignorados, mantendo os índices originais de time e K/D/A. Cada participante
+real precisa constar na demo e conferir com o placar da Valve. Escalações
+incompletas, duplicadas ou de formatos incompatíveis não são publicadas.
 O parser foi validado com uma demo real de Inferno: 10 jogadores, 21 rounds e
 K/D/A conferidos com o placar do Game Coordinator. O fluxo automático completo
 ainda precisa ser validado após configurar a conta dedicada e os códigos. KAST, clutches, trades, rating proprietário e replay 2D não fazem parte

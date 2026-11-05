@@ -20,6 +20,9 @@ export class MatchQueryDto {
   @IsOptional() @IsString() @MaxLength(64) @Matches(/^[a-zA-Z0-9_/-]+$/)
   map?: string;
 
+  @IsOptional() @IsIn(['all', 'competitive', 'wingman'])
+  mode: string = 'all';
+
   @IsOptional() @IsIn(['all', 'together'])
   scope: string = 'all';
 

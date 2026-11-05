@@ -50,6 +50,7 @@ export class TrackingService {
   private where(steamId: string, query: MatchQueryDto): Prisma.TrackedMatchWhereInput {
     return { status: 'READY', players: { some: { steamId } },
       ...(query.days ? { playedAt: { gte: new Date(Date.now() - query.days * 86400000) } } : {}),
+      ...(query.mode && query.mode !== 'all' ? { mode: query.mode } : {}),
       ...(query.map ? { map: query.map } : {}),
       ...(query.scope === 'together' ? { OR: [0, 1].map(team => ({ AND: this.ids().map(id => ({ players: { some: { steamId: id, team } } })) })) } : {}),
     };
@@ -61,7 +62,7 @@ export class TrackingService {
     const [total, matches, rows, maps, members] = await Promise.all([
       this.db.trackedMatch.count({ where }),
       this.db.trackedMatch.findMany({ where, orderBy: [{ playedAt: 'desc' }, { id: 'desc' }], take: 20, skip: (query.page - 1) * 20,
-        select: { id: true, map: true, playedAt: true, players: { where: { steamId } } } }),
+        select: { id: true, mode: true, map: true, playedAt: true, players: { where: { steamId } } } }),
       this.db.matchPlayer.findMany({ where: { steamId, match: where }, include: { match: { select: { playedAt: true } } }, orderBy: { match: { playedAt: 'asc' } } }),
       this.db.trackedMatch.findMany({ where: { status: 'READY', players: { some: { steamId } } }, distinct: ['map'], select: { map: true } }),
       this.db.user.findMany({ where: { steamId: { in: this.ids() }, tracking: { enabled: true } }, select: { steamId: true, username: true } }),
@@ -76,7 +77,7 @@ export class TrackingService {
   async detail(steamId: string, id: number) {
     this.assertAccess(steamId);
     const match = await this.db.trackedMatch.findFirst({ where: { id, status: 'READY', players: { some: { steamId } } },
-      select: { id: true, map: true, playedAt: true, rounds: true, players: { orderBy: [{ team: 'asc' }, { kills: 'desc' }] } } });
+      select: { id: true, mode: true, map: true, playedAt: true, rounds: true, players: { orderBy: [{ team: 'asc' }, { kills: 'desc' }] } } });
     if (!match) throw new NotFoundException('Partida não encontrada no seu histórico.');
     return match;
   }
