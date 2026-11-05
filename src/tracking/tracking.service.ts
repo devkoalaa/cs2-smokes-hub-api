@@ -77,7 +77,7 @@ export class TrackingService {
   async detail(steamId: string, id: number) {
     this.assertAccess(steamId);
     const match = await this.db.trackedMatch.findFirst({ where: { id, status: 'READY', players: { some: { steamId } } },
-      select: { id: true, mode: true, map: true, playedAt: true, rounds: true, players: { orderBy: [{ team: 'asc' }, { kills: 'desc' }] } } });
+      select: { id: true, mode: true, map: true, playedAt: true, rounds: true, analysis: true, players: { orderBy: [{ team: 'asc' }, { kills: 'desc' }] } } });
     if (!match) throw new NotFoundException('Partida não encontrada no seu histórico.');
     return match;
   }

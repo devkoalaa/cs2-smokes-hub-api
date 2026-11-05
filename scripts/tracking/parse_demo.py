@@ -60,7 +60,9 @@ def main():
         map_name = header.get('map_name')
         if not map_name:
             raise ValueError('Map not available')
-        print(json.dumps({'map': map_name, 'players': scoreboard(rows, roster)}, allow_nan=False))
+        from advanced import advanced
+        players = scoreboard(rows, roster)
+        print(json.dumps({'map': map_name, 'players': players, 'analysis': advanced(parser, players, ends)}, allow_nan=False))
     finally:
         demo.unlink(missing_ok=True)
 

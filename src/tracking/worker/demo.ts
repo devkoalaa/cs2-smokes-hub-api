@@ -36,6 +36,6 @@ export async function parseMatch(match: any) {
       child.stdin.end(JSON.stringify(roster));
     });
     if (!Array.isArray(result.players) || result.players.length !== roster.players.length || typeof result.map !== 'string' || result.map.length > 64) throw new CollectorError('Dados da demo incompletos.');
-    return { mode: roster.players.length === 4 ? 'wingman' : 'competitive', map: result.map, players: result.players, scoreA: roster.scores[0], scoreB: roster.scores[1], rounds: roster.scores[0] + roster.scores[1] };
+    return { analysis: result.analysis, mode: roster.players.length === 4 ? 'wingman' : 'competitive', map: result.map, players: result.players, scoreA: roster.scores[0], scoreB: roster.scores[1], rounds: roster.scores[0] + roster.scores[1] };
   } finally { await rm(folder, { recursive: true, force: true }); }
 }

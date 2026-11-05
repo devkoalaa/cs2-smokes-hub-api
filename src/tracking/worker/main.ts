@@ -52,7 +52,7 @@ async function processOne() {
     await db.$transaction(async tx => {
       await tx.matchPlayer.deleteMany({ where: { matchId: job.id } });
       await tx.trackedMatch.update({ where: { id: job.id }, data: { status: 'READY', lastError: null, valveMatchId: String(info.matchid),
-        playedAt: new Date(info.matchtime * 1000), mode: parsed.mode, map: parsed.map, rounds: parsed.rounds, scoreA: parsed.scoreA, scoreB: parsed.scoreB,
+        analysis: parsed.analysis ?? undefined, playedAt: new Date(info.matchtime * 1000), mode: parsed.mode, map: parsed.map, rounds: parsed.rounds, scoreA: parsed.scoreA, scoreB: parsed.scoreB,
         players: { create: parsed.players } } });
     });
     console.log(`Partida ${job.id} processada.`);
@@ -73,6 +73,21 @@ async function main() {
   }
   await db.$connect();
   await gc.connect();
+  if (process.argv.includes('--backfill')) {
+    const matches = await db.trackedMatch.findMany({ where: { status: 'READY', players: { some: { steamId: { in: allowed } } } }, select: { id: true, shareCode: true, analysis: true } });
+    for (const match of matches.filter(m => m.analysis === null)) {
+      try {
+        const parsed = await parseMatch(await gc.match(match.shareCode));
+        if (!parsed.analysis) throw new CollectorError('Rounds incompletos na demo.');
+        await db.trackedMatch.update({ where: { id: match.id }, data: { analysis: parsed.analysis } });
+        console.log(`Partida ${match.id} atualizada.`);
+      } catch (error) {
+        console.warn(`Partida ${match.id}: ${safeMessage(error)}`);
+        process.exitCode = 1;
+      }
+    }
+    return;
+  }
   const heartbeat = async () => { await db.trackingWorker.upsert({ where: { id: 'collector' }, create: { id: 'collector', heartbeatAt: new Date() }, update: { heartbeatAt: new Date() } }); };
   await heartbeat();
   const timer = setInterval(() => { heartbeat().catch(() => console.warn('Falha no heartbeat do coletor.')); }, 30000);
