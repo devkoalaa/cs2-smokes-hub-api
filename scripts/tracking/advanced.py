@@ -4,6 +4,8 @@ from collections import defaultdict
 from math import acos, cos, degrees, hypot, isfinite, radians, sin
 
 MASK = 'CCSPlayerPawn.m_bSpottedByMask'
+# 3: lista de mortes com posições (mapa de abates). O --backfill do coletor reprocessa versões antigas.
+ANALYSIS_VERSION = 3
 GUNS = set('ak47 aug awp bizon cz75a deagle elite famas fiveseven g3sg1 galilar glock hkp2000 m249 m4a1 m4a1_silencer mac10 mag7 mp5sd mp7 mp9 negev nova p250 p90 revolver sawedoff scar20 sg556 ssg08 tec9 ump45 usp_silencer xm1014'.split())
 
 
@@ -19,15 +21,16 @@ def advanced(parser, players, ends):
         return None
     events = {}
     for name in ['player_death', 'player_blind', 'weapon_fire', 'player_hurt']:
-        frame = parser.parse_event(name)
+        # Nas mortes, a posição de quem matou e de quem morreu vira o mapa de abates.
+        frame = parser.parse_event(name, player=['X', 'Y', 'Z', 'team_num']) if name == 'player_death' else parser.parse_event(name)
         events[name] = sorted(frame.itertuples(), key=lambda x: x.tick)
     ticks = [t for start, end, _ in ranges for t in range(start, end + 1, 8)]
     fields = [MASK, 'X', 'Y', 'Z', 'duck_amount', 'pitch', 'yaw', 'is_alive', 'team_num', 'rank']
     snapshots = parser.parse_ticks(fields, ticks=ticks).rename(columns={MASK: 'spotters'})
     samples = {p: defaultdict(list) for p in teams}
     stats = {p: dict(kast=0, opening=0, multi=0, clutch=0, flashed=0, shots=0, hits=0, rank=None) for p in teams}
-    segments = []
-    for start, end, winner in ranges:
+    segments, kill_map = [], []
+    for number, (start, end, winner) in enumerate(ranges, 1):
         rows = snapshots[(snapshots.tick >= start) & (snapshots.tick <= end)]
         by_tick = defaultdict(dict)
         for row in rows.itertuples():
@@ -53,6 +56,8 @@ def advanced(parser, players, ends):
         for e in live_events('player_death'):
             a, v = e.attacker_steamid, e.user_steamid
             alive.discard(v)
+            if v in teams:
+                kill_map.append(kill_point(e, number, start, a if a in teams else None, v))
             if a in teams and v in teams and teams[a] != teams[v]:
                 if opening:
                     stats[a]['opening'] += 1
@@ -139,4 +144,19 @@ def advanced(parser, players, ends):
                 stats[player]['premierAfter'] = int(row.rank_new)
                 if row.rank_old > 0:
                     stats[player]['premierDelta'] = int(row.rank_new - row.rank_old)
-    return dict(version=2, premier=premier, players=stats, segments=segments)
+    return dict(version=ANALYSIS_VERSION, premier=premier, players=stats, segments=segments, kills=kill_map)
+
+
+def position(e, prefix):
+    values = [getattr(e, f'{prefix}_{axis}', None) for axis in 'XYZ']
+    return [round(v) for v in values] if all(v is not None and isfinite(v) for v in values) else None
+
+
+def kill_point(e, number, start, attacker, victim):
+    """Uma morte do round: quem, com o quê, onde estavam (coordenadas do jogo) e o lado de cada um."""
+    side = {2: 'T', 3: 'CT'}
+    return dict(round=number, time=round((e.tick - start) / 64, 1), attacker=attacker, victim=victim,
+                weapon=str(e.weapon or ''), headshot=bool(e.headshot),
+                attackerPos=position(e, 'attacker') if attacker else None, victimPos=position(e, 'user'),
+                attackerSide=side.get(getattr(e, 'attacker_team_num', None)) if attacker else None,
+                victimSide=side.get(getattr(e, 'user_team_num', None)))

@@ -5,6 +5,8 @@ import { CollectorError, nextShareCode, SteamCoordinator } from './steam';
 import { queueSummaries } from './summaries';
 import { parseMatch } from './demo';
 
+// Igual ao ANALYSIS_VERSION de scripts/tracking/advanced.py.
+const ANALYSIS_VERSION = 3;
 const db = new PrismaClient();
 const gc = new SteamCoordinator();
 const allowed = allowedSteamIds(process.env.TRACKING_ALLOWED_STEAM_IDS);
@@ -76,7 +78,7 @@ async function main() {
   await gc.connect();
   if (process.argv.includes('--backfill')) {
     const matches = await db.trackedMatch.findMany({ where: { status: 'READY', players: { some: { steamId: { in: allowed } } } }, select: { id: true, shareCode: true, analysis: true } });
-    for (const match of matches.filter(m => !m.analysis || typeof m.analysis !== 'object' || !('version' in m.analysis) || m.analysis.version !== 2)) {
+    for (const match of matches.filter(m => !m.analysis || typeof m.analysis !== 'object' || !('version' in m.analysis) || m.analysis.version !== ANALYSIS_VERSION)) {
       try {
         const parsed = await parseMatch(await gc.match(match.shareCode));
         if (!parsed.analysis) throw new CollectorError('Rounds incompletos na demo.');
