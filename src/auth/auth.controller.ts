@@ -152,8 +152,8 @@ export class AuthController {
   @Get('me')
   @UseGuards(JwtAuthGuard)
   async getProfile(@Req() req: Request) {
-    const user = req.user as any;
-    
+    const user = await this.authService.syncSteamProfile(req.user as any);
+
     return {
       id: user.id,
       steamId: user.steamId,

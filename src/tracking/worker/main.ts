@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { allowedSteamIds, decryptAuthCode, trackingKey } from '../tracking.crypto';
 import { CollectorError, nextShareCode, SteamCoordinator } from './steam';
+import { refreshSteamProfiles } from '../../common/steam-profiles';
 import { queueSummaries } from './summaries';
 import { parseMatch } from './demo';
 
@@ -13,6 +14,7 @@ const gc = new SteamCoordinator();
 const allowed = allowedSteamIds(process.env.TRACKING_ALLOWED_STEAM_IDS);
 // Quem pode ter partidas importadas: quem ganhou acesso pelo beta, além dos fundadores.
 const withAccess = { OR: [{ accessGrantedAt: { not: null } }, { steamId: { in: allowed } }] };
+let profilesSyncedAt = 0;
 let stopped = false;
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const safeMessage = (error: unknown) => error instanceof CollectorError ? error.publicMessage : 'Falha temporária no processamento. Verifique o coletor.';
@@ -103,6 +105,12 @@ async function main() {
       await db.trackedMatch.updateMany({ where: { status: 'PROCESSING', updatedAt: { lt: new Date(Date.now() - 900000) } }, data: { status: 'PENDING' } });
       await discover();
       await processOne();
+      // Nome e foto de todo mundo (inclusive quem não abre o site) a cada 6 horas.
+      if (Date.now() - profilesSyncedAt > 6 * 3600_000) {
+        profilesSyncedAt = Date.now();
+        const users = await db.user.findMany({ where: withAccess, select: { steamId: true } });
+        await refreshSteamProfiles(db, process.env.STEAM_API_KEY, users.map(u => u.steamId)).catch(() => console.warn('Steam indisponível para atualizar perfis.'));
+      }
       if (process.env.CS2_SUMMARY_DIR) {
         await queueSummaries(db, allowed, process.env.CS2_SUMMARY_DIR).catch(() => console.warn('Fila de resumos indisponível; nova tentativa no próximo ciclo.'));
       }

@@ -10,6 +10,7 @@ describe('AuthController', () => {
   let authService: AuthService;
 
   const mockAuthService = {
+      syncSteamProfile: jest.fn(async (u: any) => u),
     generateJwtToken: jest.fn(),
   };
 

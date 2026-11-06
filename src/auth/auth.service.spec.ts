@@ -83,6 +83,7 @@ describe('AuthService', () => {
           steamId: mockSteamProfile.id,
           username: mockSteamProfile.displayName,
           avatarUrl: mockSteamProfile.photos[2].value,
+          steamSyncedAt: expect.any(Date),
         },
       });
       expect(result).toEqual(mockUser);
@@ -112,6 +113,7 @@ describe('AuthService', () => {
         data: {
           username: updatedProfile.displayName,
           avatarUrl: updatedProfile.photos[2].value,
+          steamSyncedAt: expect.any(Date),
         },
       });
       expect(result).toEqual(updatedUser);
@@ -136,6 +138,7 @@ describe('AuthService', () => {
           steamId: profileWithoutPhotos.id,
           username: profileWithoutPhotos.displayName,
           avatarUrl: undefined,
+          steamSyncedAt: expect.any(Date),
         },
       });
     });
@@ -159,6 +162,7 @@ describe('AuthService', () => {
           steamId: profileWithUsernameOnly.id,
           username: profileWithUsernameOnly.username,
           avatarUrl: profileWithUsernameOnly.photos[0].value,
+          steamSyncedAt: expect.any(Date),
         },
       });
     });
@@ -177,6 +181,7 @@ describe('AuthService', () => {
           steamId: mockSteamProfile.id,
           username: mockSteamProfile.displayName,
           avatarUrl: mockSteamProfile.photos[2].value, // Should use the largest (index 2)
+          steamSyncedAt: expect.any(Date),
         },
       });
     });
