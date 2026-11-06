@@ -24,6 +24,15 @@ model User {
   accessGrantedAt DateTime?
   // Aparecer nas miniaturas dos links compartilhados por mim ou pelos meus grupos.
   allowPreview Boolean @default(true)
+  // Banner do perfil: um mapa escolhido (bannerMap) ou uma imagem enviada (banner).
+  bannerMap String?
+  banner    Image?
+  // Discord vinculado pelo /cs2 vincular do Clodoaldo, que manda o resumo da partida no privado.
+  discordId            String?   @unique
+  discordName          String?
+  discordDm            Boolean   @default(true)
+  discordCode          String?   @unique
+  discordCodeExpiresAt DateTime?
   groups GroupMember[]
   ownedGroups Group[]
   invites Invite[]
@@ -206,7 +215,21 @@ model Group {
   createdAt DateTime @default(now())
   members   GroupMember[]
   invites   Invite[]
+  avatar    Image?
   @@map("groups")
+}
+
+// Imagens enviadas (já convertidas para WebP). A chave é aleatória e muda a cada envio:
+// o endereço serve de cache eterno e não dá para adivinhar a imagem de ninguém.
+model Image {
+  key       String   @id
+  data      Bytes
+  createdAt DateTime @default(now())
+  userId    Int?     @unique
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groupId   Int?     @unique
+  group     Group?   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  @@map("images")
 }
 
 model GroupMember {

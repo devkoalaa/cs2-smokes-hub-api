@@ -15,10 +15,16 @@ export async function queueSummaries(db: PrismaClient, allowed: string[], direct
     if (match.playedAt && match.playedAt.getTime() >= start) {
       const analysis = match.analysis as { players?: Record<string, { premierAfter?: number; premierDelta?: number; clutch?: number; multi?: number; flashed?: number }> } | null;
       const roster = match.players.map(p => ({ team: p.team, name: p.name, kills: p.kills, deaths: p.deaths }));
-      for (const player of match.players.filter(p => allowed.includes(p.steamId))) {
+      // Quem recebe: quem vinculou o Discord no site e deixou o aviso ligado (precisa ter acesso),
+      // além dos fundadores, que o Clodoaldo ainda conhece pelo CS2_DISCORD_USERS.
+      const linked = await db.user.findMany({ where: { steamId: { in: match.players.map(p => p.steamId) }, discordId: { not: null }, discordDm: true,
+        OR: [{ accessGrantedAt: { not: null } }, { steamId: { in: allowed } }] }, select: { steamId: true, discordId: true } });
+      const discordOf = new Map(linked.map(u => [u.steamId, u.discordId!]));
+      const optedOut = new Set((await db.user.findMany({ where: { steamId: { in: allowed }, discordDm: false }, select: { steamId: true } })).map(u => u.steamId));
+      for (const player of match.players.filter(p => discordOf.has(p.steamId) || (allowed.includes(p.steamId) && !optedOut.has(p.steamId)))) {
         const stats = analysis?.players?.[player.steamId];
         const summary = {
-          matchId: match.id, steamId: player.steamId, map: match.map, playedAt: match.playedAt,
+          matchId: match.id, steamId: player.steamId, discordId: discordOf.get(player.steamId) ?? null, map: match.map, playedAt: match.playedAt,
           mode: match.mode, team: player.team, roster, headshots: player.headshots,
           clutches: stats?.clutch, multi: stats?.multi, flashed: stats?.flashed,
           scoreFor: player.scoreFor, scoreAgainst: player.scoreAgainst,

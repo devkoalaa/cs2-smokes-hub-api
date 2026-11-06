@@ -1,5 +1,5 @@
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength, ValidateIf } from 'class-validator';
 
 export const SHARE_CODE = /^CSGO-(?:[A-Za-z0-9]{5}-){4}[A-Za-z0-9]{5}$/;
 
@@ -40,9 +40,30 @@ export class GroupNameDto {
   name: string;
 }
 
+/** Mapas que têm arte oficial no site (public/images/maps/art). */
+export const BANNER_MAPS = ['de_ancient', 'de_anubis', 'de_dust2', 'de_inferno', 'de_mirage', 'de_nuke', 'de_overpass', 'de_train', 'de_vertigo'];
+
 export class PreferencesDto {
-  @IsBoolean()
-  allowPreview: boolean;
+  @IsOptional() @IsBoolean()
+  allowPreview?: boolean;
+
+  /** null volta ao padrão (o mapa mais jogado). */
+  @IsOptional() @ValidateIf((_, v) => v !== null) @IsIn(BANNER_MAPS)
+  bannerMap?: string | null;
+
+  @IsOptional() @IsBoolean()
+  discordDm?: boolean;
+}
+
+export class DiscordLinkDto {
+  @IsString() @Matches(/^[A-Z2-9]{8}$/)
+  code: string;
+
+  @IsString() @Matches(/^\d{17,20}$/)
+  discordId: string;
+
+  @IsString() @MinLength(1) @MaxLength(64)
+  discordName: string;
 }
 
 export class AccessInviteDto {

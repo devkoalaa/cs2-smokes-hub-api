@@ -7,6 +7,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccessService, LIMITS, randomCode } from './tracking.access';
 import { AccessInviteDto, GroupNameDto, PeriodDto } from './tracking.dto';
+import { imageUrl } from './tracking.media';
 import { mapBreakdown, Match, matchCard, periodStats, periodWhere } from './tracking.stats';
 
 type Viewer = Pick<User, 'id' | 'steamId' | 'accessGrantedAt'>;
@@ -82,32 +83,34 @@ export class GroupsService {
       .filter(t => t.mine.length >= 2).slice(0, 15)
       .map(({ match, mine }) => { const card = matchCard(match, mine[0].steamId, ids);
         return { ...card, players: [card.player, ...card.teammates], viewerPlayed: match.players.some(p => p.steamId === user.steamId) }; });
-    return { id: group.id, name: group.name, createdAt: group.createdAt, owner: group.ownerId === user.id, ownerId: group.ownerId,
+    const avatar = await this.db.image.findUnique({ where: { groupId: id }, select: { key: true } });
+    return { id: group.id, name: group.name, avatarUrl: imageUrl(avatar?.key), createdAt: group.createdAt, owner: group.ownerId === user.id, ownerId: group.ownerId,
       invite: invite?.code ?? null, limits: LIMITS, days, members: ranking, together };
   }
 
   async profile(user: Viewer, steamId: string, days: number) {
     await this.access.assertAccess(user);
     const circle = await this.access.circle(user.id);
-    const target = await this.db.user.findUnique({ where: { steamId }, select: { ...publicUser, accessGrantedAt: true, tracking: { select: { enabled: true } } } });
+    const target = await this.db.user.findUnique({ where: { steamId }, select: { ...publicUser, accessGrantedAt: true, bannerMap: true, banner: { select: { key: true } }, tracking: { select: { enabled: true } } } });
     // Perfil privado: só a própria pessoa e quem divide algum grupo com ela.
     if (!target?.accessGrantedAt || (steamId !== user.steamId && !circle.includes(steamId))) throw new NotFoundException('Perfil não encontrado.');
     const [matches, groups] = await Promise.all([this.period(steamId, days),
       this.db.group.findMany({ where: { AND: [{ members: { some: { userId: target.id } } }, { members: { some: { userId: user.id } } }] },
-        select: { id: true, name: true, _count: { select: { members: true } } }, orderBy: { createdAt: 'asc' } })]);
+        select: { id: true, name: true, avatar: { select: { key: true } }, _count: { select: { members: true } } }, orderBy: { createdAt: 'asc' } })]);
     const cards = matches.map(m => ({ ...matchCard(m, steamId, circle), viewerPlayed: m.players.some(p => p.steamId === user.steamId) }));
     const best = cards.filter(c => c.player.rating != null).sort((a, b) => b.player.rating! - a.player.rating!)[0] ?? null;
     return { user: { steamId: target.steamId, username: target.username, avatarUrl: target.avatarUrl, memberSince: target.accessGrantedAt,
-      importing: !!target.tracking?.enabled, self: steamId === user.steamId }, days, stats: periodStats(matches, steamId),
+      importing: !!target.tracking?.enabled, self: steamId === user.steamId,
+      banner: { map: target.bannerMap, url: imageUrl(target.banner?.key) } }, days, stats: periodStats(matches, steamId),
       best, maps: mapBreakdown(cards), recent: cards.slice(0, 10),
-      groups: groups.map(g => ({ id: g.id, name: g.name, members: g._count.members })) };
+      groups: groups.map(g => ({ id: g.id, name: g.name, members: g._count.members, avatarUrl: imageUrl(g.avatar?.key) })) };
   }
 
   async inviteInfo(code: string) {
     const invite = await this.db.invite.findUnique({ where: { code }, include: { createdBy: { select: { username: true, avatarUrl: true } },
-      group: { select: { name: true, _count: { select: { members: true } } } } } });
+      group: { select: { name: true, avatar: { select: { key: true } }, _count: { select: { members: true } } } } } });
     if (!invite || invite.usesLeft === 0) throw new NotFoundException('Esse convite não vale mais. Peça um link novo.');
-    return { kind: invite.kind, inviter: invite.createdBy, group: invite.group ? { name: invite.group.name, members: invite.group._count.members } : null };
+    return { kind: invite.kind, inviter: invite.createdBy, group: invite.group ? { name: invite.group.name, members: invite.group._count.members, avatarUrl: imageUrl(invite.group.avatar?.key) } : null };
   }
 
   async accept(user: Viewer, code: string) {

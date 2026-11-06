@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AccessService, randomCode } from './tracking.access';
 import { encryptAuthCode, trackingKey, validShareKey } from './tracking.crypto';
 import { ConfigureTrackingDto, MatchQueryDto, PreferencesDto } from './tracking.dto';
+import { imageUrl } from './tracking.media';
 import { summarize } from './tracking.metrics';
 
 type Viewer = Pick<User, 'id' | 'steamId' | 'accessGrantedAt'>;
@@ -15,11 +16,15 @@ export class TrackingService {
 
   async status(user: Viewer) {
     const [granted, seats, me, groups] = await Promise.all([this.access.hasAccess(user), this.access.seats(),
-      this.db.user.findUnique({ where: { id: user.id }, select: { allowPreview: true } }),
+      this.db.user.findUnique({ where: { id: user.id }, select: { allowPreview: true, bannerMap: true, banner: { select: { key: true } },
+        discordName: true, discordDm: true, discordCode: true, discordCodeExpiresAt: true } }),
       this.db.groupMember.findMany({ where: { userId: user.id }, orderBy: { joinedAt: 'asc' },
-        select: { group: { select: { id: true, name: true, ownerId: true, _count: { select: { members: true } } } } } })]);
+        select: { group: { select: { id: true, name: true, ownerId: true, avatar: { select: { key: true } }, _count: { select: { members: true } } } } } })]);
+    const codeValid = !!me?.discordCode && !!me.discordCodeExpiresAt && me.discordCodeExpiresAt > new Date();
     const base = { access: granted, admin: this.access.isAdmin(user), seats, allowPreview: me?.allowPreview ?? true,
-      groups: groups.map(({ group }) => ({ id: group.id, name: group.name, owner: group.ownerId === user.id, members: group._count.members })) };
+      banner: { map: me?.bannerMap ?? null, url: imageUrl(me?.banner?.key) },
+      discord: { name: me?.discordName ?? null, dm: me?.discordDm ?? true, code: codeValid ? me!.discordCode : null, codeExpiresAt: codeValid ? me!.discordCodeExpiresAt : null },
+      groups: groups.map(({ group }) => ({ id: group.id, name: group.name, owner: group.ownerId === user.id, members: group._count.members, avatarUrl: imageUrl(group.avatar?.key) })) };
     if (!granted) return { ...base, tracking: null, workerOnline: false, workerLastSeen: null, serverConfigured: false, queue: [] };
     const [tracking, worker, queue] = await Promise.all([
       this.db.matchTracking.findUnique({ where: { userId: user.id }, select: { enabled: true, lastCheckedAt: true, lastError: true } }),
@@ -50,8 +55,9 @@ export class TrackingService {
   }
 
   async preferences(user: Viewer, dto: PreferencesDto) {
-    await this.db.user.update({ where: { id: user.id }, data: { allowPreview: dto.allowPreview } });
-    return { allowPreview: dto.allowPreview };
+    const me = await this.db.user.update({ where: { id: user.id }, data: { allowPreview: dto.allowPreview, bannerMap: dto.bannerMap, discordDm: dto.discordDm },
+      select: { allowPreview: true, bannerMap: true, discordDm: true } });
+    return me;
   }
 
   /**
@@ -69,7 +75,9 @@ export class TrackingService {
       await tx.group.deleteMany({ where: { ownerId: user.id } });
       await tx.groupMember.deleteMany({ where: { userId: user.id } });
       await tx.invite.deleteMany({ where: { createdById: user.id } });
-      await tx.user.update({ where: { id: user.id }, data: { accessGrantedAt: null, allowPreview: true } });
+      await tx.image.deleteMany({ where: { userId: user.id } });
+      await tx.user.update({ where: { id: user.id }, data: { accessGrantedAt: null, allowPreview: true, bannerMap: null,
+        discordId: null, discordName: null, discordDm: true, discordCode: null, discordCodeExpiresAt: null } });
       const others = await tx.user.findMany({ where: { accessGrantedAt: { not: null } }, select: { steamId: true } });
       await tx.trackedMatch.deleteMany({ where: { id: { in: requested.map(r => r.matchId) }, requests: { none: {} },
         players: { none: { steamId: { in: others.map(o => o.steamId) } } } } });

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaClient } from '@prisma/client';
 import { AccessService } from './tracking.access';
 import { GroupsService } from './tracking.groups';
+import { MediaService } from './tracking.media';
 import { TrackingService } from './tracking.service';
 
 // Beta, grupos e privacidade contra um Postgres de verdade com as migrations aplicadas.
@@ -16,6 +17,7 @@ const url = process.env.TEST_DATABASE_URL;
   const access = new AccessService(db, config);
   const tracking = new TrackingService(db, config, access);
   const groups = new GroupsService(db, access);
+  const media = new MediaService(db, access);
   const users: Record<string, any> = {};
   const fresh = async (name: string) => (users[name] = await db.user.findUnique({ where: { id: users[name].id } }));
 
@@ -34,7 +36,7 @@ const url = process.env.TEST_DATABASE_URL;
     groupId = (await groups.create(users.F1, 'Trio')).id;
     invite = (await groups.group(users.F1, groupId, 0)).invite;
     expect(invite).toMatch(/^[A-Za-z0-9]{12}$/);
-    expect((await groups.inviteInfo(invite)).group).toEqual({ name: 'Trio', members: 1 });
+    expect((await groups.inviteInfo(invite)).group).toEqual({ name: 'Trio', members: 1, avatarUrl: null });
   });
 
   it('convite de grupo dá acesso até acabarem as vagas', async () => {
@@ -88,6 +90,31 @@ const url = process.env.TEST_DATABASE_URL;
     expect(group.members.find(m => m.username === 'F1')?.stats.matches).toBe(1);
   });
 
+  it('Discord vincula pelo código do site, um Discord por conta', async () => {
+    const { code } = await media.discordCode(users.A);
+    expect(code).toMatch(/^[A-Z2-9]{8}$/);
+    expect(await media.linkDiscord({ code, discordId: '123456789012345678', discordName: 'a#0' })).toEqual({ username: 'A' });
+    await expect(media.linkDiscord({ code, discordId: '123456789012345678', discordName: 'a#0' })).rejects.toThrow(NotFoundException);
+    const other = await media.discordCode(users.F1);
+    await media.linkDiscord({ code: other.code, discordId: '123456789012345678', discordName: 'a#0' });
+    expect((await fresh('A')).discordId).toBeNull();
+    expect((await fresh('F1')).discordId).toBe('123456789012345678');
+    await media.unlinkByDiscord('123456789012345678');
+    expect((await fresh('F1')).discordId).toBeNull();
+  });
+
+  it('banner e foto do grupo viram WebP e só o dono troca a foto', async () => {
+    const png = { buffer: await require('sharp')({ create: { width: 40, height: 30, channels: 3, background: '#e11d48' } }).png().toBuffer() } as any;
+    const { url } = await media.setBanner(users.A, png);
+    const key = url!.split('/').pop()!;
+    const meta = await require('sharp')(await media.image(key)).metadata();
+    expect([meta.format, meta.width, meta.height]).toEqual(['webp', 1600, 640]);
+    await expect(media.setBanner(users.A, { buffer: Buffer.from('não é imagem') } as any)).rejects.toThrow(BadRequestException);
+    await expect(media.setGroupAvatar(users.A, groupId, png)).rejects.toThrow(ForbiddenException);
+    expect((await media.setGroupAvatar(users.F1, groupId, png)).url).toMatch(/^\/api\/tracking\/images\/[A-Za-z0-9]{24}$/);
+    expect((await groups.group(users.A, groupId, 0)).avatarUrl).toMatch(/images/);
+  });
+
   it('excluir meus dados libera a vaga e apaga o que só a pessoa importou', async () => {
     const solo = await db.trackedMatch.create({ data: { shareCode: 'CSGO-solo', status: 'READY', map: 'de_nuke', playedAt: new Date(), rounds: 1,
       players: { create: [{ steamId: users.A.steamId, name: 'A', team: 0, kills: 1, deaths: 0, assists: 0, rounds: 1, scoreFor: 1, scoreAgainst: 0 }] },
@@ -95,6 +122,7 @@ const url = process.env.TEST_DATABASE_URL;
     await db.matchRequest.create({ data: { userId: users.A.id, matchId } });
     await tracking.deleteMine(users.A); await fresh('A');
     expect(users.A.accessGrantedAt).toBeNull();
+    expect(await db.image.count({ where: { userId: users.A.id } })).toBe(0);
     expect(await db.groupMember.count({ where: { userId: users.A.id } })).toBe(0);
     expect(await db.trackedMatch.findUnique({ where: { id: solo.id } })).toBeNull();
     expect(await db.trackedMatch.findUnique({ where: { id: matchId } })).not.toBeNull();
