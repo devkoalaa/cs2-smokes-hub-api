@@ -38,11 +38,15 @@ export class MediaService {
    */
   private async convert(file: Upload | undefined, size: { width: number; height: number }) {
     if (!file?.buffer?.length) throw new BadRequestException('Envie uma imagem.');
+    const invalid = new BadRequestException('Não deu para ler essa imagem. Use JPG, PNG ou WebP.');
+    // Só os formatos comuns: SVG (librsvg) e HEIF (libheif) ficam de fora, menos superfície de ataque.
+    const format = await sharp(file.buffer).metadata().then(m => m.format, () => null);
+    if (!format || !['jpeg', 'png', 'webp'].includes(format)) throw invalid;
     try {
       return await sharp(file.buffer, { limitInputPixels: 50_000_000, animated: false }).rotate()
         .resize(size.width, size.height, { fit: 'cover', position: 'attention' }).webp({ quality: 82 }).toBuffer();
     } catch {
-      throw new BadRequestException('Não deu para ler essa imagem. Use JPG, PNG ou WebP.');
+      throw invalid;
     }
   }
 

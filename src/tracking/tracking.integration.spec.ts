@@ -110,6 +110,8 @@ const url = process.env.TEST_DATABASE_URL;
     const meta = await require('sharp')(await media.image(key)).metadata();
     expect([meta.format, meta.width, meta.height]).toEqual(['webp', 1600, 640]);
     await expect(media.setBanner(users.A, { buffer: Buffer.from('não é imagem') } as any)).rejects.toThrow(BadRequestException);
+    const svg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10"/></svg>');
+    await expect(media.setBanner(users.A, { buffer: svg } as any)).rejects.toThrow(BadRequestException);
     await expect(media.setGroupAvatar(users.A, groupId, png)).rejects.toThrow(ForbiddenException);
     expect((await media.setGroupAvatar(users.F1, groupId, png)).url).toMatch(/^\/api\/tracking\/images\/[A-Za-z0-9]{24}$/);
     expect((await groups.group(users.A, groupId, 0)).avatarUrl).toMatch(/images/);
