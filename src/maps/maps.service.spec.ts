@@ -34,8 +34,8 @@ describe('MapsService', () => {
   describe('findAll', () => {
     it('should return all maps', async () => {
       const expectedMaps = [
-        { id: 1, name: 'Dust2', description: 'Classic desert map', thumbnail: 'dust2.jpg', radar: 'dust2_radar.jpg', _count: { smokes: 5 } },
-        { id: 2, name: 'Mirage', description: 'Middle Eastern city map', thumbnail: 'mirage.jpg', radar: 'mirage_radar.jpg', _count: { smokes: 8 } },
+        { id: 1, name: 'Dust2', description: 'Classic desert map', thumbnail: 'dust2.jpg', radar: 'dust2_radar.jpg', radarLower: null, isActive: true, _count: { smokes: 5 } },
+        { id: 2, name: 'Mirage', description: 'Middle Eastern city map', thumbnail: 'mirage.jpg', radar: 'mirage_radar.jpg', radarLower: null, isActive: true, _count: { smokes: 8 } },
       ];
 
       mockPrismaService.map.findMany.mockResolvedValue(expectedMaps);
@@ -49,12 +49,14 @@ describe('MapsService', () => {
           description: true,
           thumbnail: true,
           radar: true,
+          radarLower: true,
+          isActive: true,
           _count: { select: { smokes: true } },
         },
       });
       expect(result).toEqual([
-        { id: 1, name: 'Dust2', description: 'Classic desert map', thumbnail: 'dust2.jpg', radar: 'dust2_radar.jpg', smokesCount: 5 },
-        { id: 2, name: 'Mirage', description: 'Middle Eastern city map', thumbnail: 'mirage.jpg', radar: 'mirage_radar.jpg', smokesCount: 8 },
+        { id: 1, name: 'Dust2', description: 'Classic desert map', thumbnail: 'dust2.jpg', radar: 'dust2_radar.jpg', radarLower: null, isActive: true, smokesCount: 5 },
+        { id: 2, name: 'Mirage', description: 'Middle Eastern city map', thumbnail: 'mirage.jpg', radar: 'mirage_radar.jpg', radarLower: null, isActive: true, smokesCount: 8 },
       ]);
     });
 
@@ -69,7 +71,7 @@ describe('MapsService', () => {
 
   describe('findById', () => {
     it('should return map when found', async () => {
-      const expectedMap = { id: 1, name: 'Dust2', description: 'Classic desert map', thumbnail: 'dust2.jpg', radar: 'dust2_radar.jpg', _count: { smokes: 5 } };
+      const expectedMap = { id: 1, name: 'Dust2', description: 'Classic desert map', thumbnail: 'dust2.jpg', radar: 'dust2_radar.jpg', radarLower: null, isActive: true, _count: { smokes: 5 } };
 
       mockPrismaService.map.findUnique.mockResolvedValue(expectedMap);
 
@@ -83,6 +85,8 @@ describe('MapsService', () => {
           description: true,
           thumbnail: true,
           radar: true,
+          radarLower: true,
+          isActive: true,
           _count: { select: { smokes: true } },
         },
       });
@@ -92,6 +96,8 @@ describe('MapsService', () => {
         description: 'Classic desert map',
         thumbnail: 'dust2.jpg',
         radar: 'dust2_radar.jpg',
+        radarLower: null,
+        isActive: true,
         smokesCount: 5,
       });
     });
@@ -111,6 +117,8 @@ describe('MapsService', () => {
           description: true,
           thumbnail: true,
           radar: true,
+          radarLower: true,
+          isActive: true,
           _count: { select: { smokes: true } },
         },
       });

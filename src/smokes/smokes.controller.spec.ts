@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SmokesController } from './smokes.controller';
 import { SmokesService } from './smokes.service';
-import { CreateSmokeDto } from '../common/dto/create-smoke.dto';
+import { CreateSmokeDto, SmokeType } from '../common/dto/create-smoke.dto';
 import { SmokeResponseDto } from '../common/dto/smoke-response.dto';
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 
@@ -26,6 +26,7 @@ describe('SmokesController', () => {
     title: 'Test Smoke',
     videoUrl: 'https://example.com/video',
     timestamp: 30,
+    type: SmokeType.SMOKE,
     x_coord: 100.5,
     y_coord: 200.5,
     score: 5,
@@ -42,7 +43,8 @@ describe('SmokesController', () => {
     map: {
       id: 1,
       name: 'de_dust2',
-      imageUrl: 'https://example.com/dust2.jpg',
+      thumbnail: 'https://example.com/dust2.jpg',
+      isActive: true,
     },
   };
 

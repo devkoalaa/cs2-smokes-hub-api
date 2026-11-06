@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { SmokesService } from './smokes.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateSmokeDto } from '../common/dto/create-smoke.dto';
+import { CreateSmokeDto, SmokeType } from '../common/dto/create-smoke.dto';
 
 describe('SmokesService', () => {
   let service: SmokesService;
@@ -11,7 +11,8 @@ describe('SmokesService', () => {
   const mockMap = {
     id: 1,
     name: 'Dust2',
-    imageUrl: 'https://example.com/dust2.jpg',
+    thumbnail: 'https://example.com/dust2.jpg',
+    isActive: true,
   };
 
   const mockUser = {
@@ -56,6 +57,7 @@ describe('SmokesService', () => {
       smoke: {
         findUnique: jest.fn(),
         create: jest.fn(),
+        update: jest.fn(),
         delete: jest.fn(),
       },
       $queryRaw: jest.fn(),
@@ -187,8 +189,10 @@ describe('SmokesService', () => {
           title: mockCreateSmokeDto.title,
           videoUrl: mockCreateSmokeDto.videoUrl,
           timestamp: mockCreateSmokeDto.timestamp,
+          type: SmokeType.SMOKE, // padrão quando o tipo não é informado
           x_coord: mockCreateSmokeDto.x_coord,
           y_coord: mockCreateSmokeDto.y_coord,
+          floor: undefined, // mapa de um andar só
           authorId,
           mapId: mockCreateSmokeDto.mapId,
         },
@@ -207,7 +211,8 @@ describe('SmokesService', () => {
             select: {
               id: true,
               name: true,
-              imageUrl: true,
+              thumbnail: true,
+              isActive: true,
             },
           },
         },
@@ -236,10 +241,11 @@ describe('SmokesService', () => {
       const ownedSmoke = {
         id: smokeId,
         authorId: userId,
+        deletedAt: null,
       };
 
       prismaService.smoke.findUnique.mockResolvedValue(ownedSmoke);
-      prismaService.smoke.delete.mockResolvedValue(mockSmoke);
+      prismaService.smoke.update.mockResolvedValue({ ...mockSmoke, deletedAt: new Date() });
 
       // Act
       await service.delete(smokeId, userId);
@@ -250,11 +256,15 @@ describe('SmokesService', () => {
         select: {
           id: true,
           authorId: true,
+          deletedAt: true,
         },
       });
-      expect(prismaService.smoke.delete).toHaveBeenCalledWith({
+      // Exclusão lógica: marca deletedAt em vez de apagar o registro
+      expect(prismaService.smoke.update).toHaveBeenCalledWith({
         where: { id: smokeId },
+        data: { deletedAt: expect.any(Date) },
       });
+      expect(prismaService.smoke.delete).not.toHaveBeenCalled();
     });
 
     it('should throw NotFoundException for non-existent smoke', async () => {
@@ -299,6 +309,7 @@ describe('SmokesService', () => {
 
       // Act & Assert
       await expect(service.delete(smokeId, userId)).rejects.toThrow(ForbiddenException);
+      expect(prismaService.smoke.update).not.toHaveBeenCalled();
       expect(prismaService.smoke.delete).not.toHaveBeenCalled();
     });
   });

@@ -73,7 +73,7 @@ describe('RatingsService', () => {
       // Assert
       expect(prismaService.smoke.findUnique).toHaveBeenCalledWith({
         where: { id: smokeId },
-        select: { id: true },
+        select: { id: true, deletedAt: true },
       });
       expect(prismaService.user.findUnique).toHaveBeenCalledWith({
         where: { id: userId },

@@ -36,6 +36,7 @@ describe('ReportsService', () => {
         findUnique: jest.fn(),
       },
       report: {
+        findUnique: jest.fn(),
         create: jest.fn(),
       },
     };
@@ -69,6 +70,7 @@ describe('ReportsService', () => {
 
       prismaService.smoke.findUnique.mockResolvedValue(mockSmoke);
       prismaService.user.findUnique.mockResolvedValue(mockUser);
+      prismaService.report.findUnique.mockResolvedValue(null); // ainda não denunciou
       prismaService.report.create.mockResolvedValue(mockReport);
 
       // Act
@@ -77,11 +79,14 @@ describe('ReportsService', () => {
       // Assert
       expect(prismaService.smoke.findUnique).toHaveBeenCalledWith({
         where: { id: smokeId },
-        select: { id: true },
+        select: { id: true, deletedAt: true },
       });
       expect(prismaService.user.findUnique).toHaveBeenCalledWith({
         where: { id: reporterId },
         select: { id: true },
+      });
+      expect(prismaService.report.findUnique).toHaveBeenCalledWith({
+        where: { reporterId_smokeId: { reporterId, smokeId } },
       });
       expect(prismaService.report.create).toHaveBeenCalledWith({
         data: {
@@ -103,6 +108,7 @@ describe('ReportsService', () => {
 
       prismaService.smoke.findUnique.mockResolvedValue(mockSmoke);
       prismaService.user.findUnique.mockResolvedValue(mockUser);
+      prismaService.report.findUnique.mockResolvedValue(null); // ainda não denunciou
       prismaService.report.create.mockResolvedValue(mockReport);
 
       // Act
@@ -211,6 +217,27 @@ describe('ReportsService', () => {
       expect(prismaService.report.create).not.toHaveBeenCalled();
     });
 
+    it('should throw BadRequestException when user already reported the smoke', async () => {
+      // Arrange
+      const smokeId = 1;
+      const reporterId = 1;
+      const reportSmokeDto: ReportSmokeDto = {
+        reason: 'This smoke is inappropriate',
+      };
+
+      prismaService.smoke.findUnique.mockResolvedValue(mockSmoke);
+      prismaService.user.findUnique.mockResolvedValue(mockUser);
+      prismaService.report.findUnique.mockResolvedValue(mockReport);
+
+      // Act & Assert
+      await expect(service.create(smokeId, reporterId, reportSmokeDto)).rejects.toThrow(
+        new BadRequestException('You have already reported this smoke'),
+      );
+
+      // Denúncia duplicada não cria registro novo
+      expect(prismaService.report.create).not.toHaveBeenCalled();
+    });
+
     it('should validate reason before checking smoke existence', async () => {
       // Arrange
       const smokeId = 1;
@@ -238,6 +265,7 @@ describe('ReportsService', () => {
 
       prismaService.smoke.findUnique.mockResolvedValue(mockSmoke);
       prismaService.user.findUnique.mockResolvedValue(mockUser);
+      prismaService.report.findUnique.mockResolvedValue(null); // ainda não denunciou
       prismaService.report.create.mockResolvedValue(mockReport);
 
       // Act
@@ -262,6 +290,7 @@ describe('ReportsService', () => {
 
       prismaService.smoke.findUnique.mockResolvedValue(mockSmoke);
       prismaService.user.findUnique.mockResolvedValue(mockUser);
+      prismaService.report.findUnique.mockResolvedValue(null); // ainda não denunciou
       prismaService.report.create.mockResolvedValue(mockReport);
 
       // Act
@@ -289,6 +318,7 @@ describe('ReportsService', () => {
 
       prismaService.smoke.findUnique.mockResolvedValue(mockSmoke);
       prismaService.user.findUnique.mockResolvedValue(mockUser);
+      prismaService.report.findUnique.mockResolvedValue(null); // ainda não denunciou
       prismaService.report.create.mockResolvedValue(mockReport);
 
       // Act

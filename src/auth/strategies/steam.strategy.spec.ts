@@ -12,8 +12,15 @@ describe('SteamStrategy', () => {
     validateSteamUser: jest.fn(),
   };
 
+  // O passport-steam exige returnURL e realm já no construtor
+  const steamConfig: Record<string, string> = {
+    STEAM_RETURN_URL: 'http://localhost:3000/auth/steam/return',
+    STEAM_REALM: 'http://localhost:3000/',
+    STEAM_API_KEY: 'test-steam-api-key',
+  };
+
   const mockConfigService = {
-    get: jest.fn(),
+    get: jest.fn((key: string) => steamConfig[key]),
   };
 
   beforeEach(async () => {

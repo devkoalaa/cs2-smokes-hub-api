@@ -26,6 +26,8 @@ describe('AuthModule', () => {
               JWT_SECRET: 'test-jwt-secret-for-testing',
               DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
               STEAM_API_KEY: 'test-steam-api-key',
+              STEAM_RETURN_URL: 'http://localhost:3000/auth/steam/return',
+              STEAM_REALM: 'http://localhost:3000/',
             }),
           ],
         }),

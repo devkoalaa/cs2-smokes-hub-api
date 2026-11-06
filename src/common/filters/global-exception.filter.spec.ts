@@ -22,8 +22,10 @@ describe('GlobalExceptionFilter', () => {
       json: jest.fn().mockReturnThis(),
     };
 
+    // O filtro lê `request.path` (sem query string) para não registrar parâmetros OpenID
     mockRequest = {
       url: '/test-endpoint',
+      path: '/test-endpoint',
       method: 'POST',
       ip: '127.0.0.1',
       headers: {

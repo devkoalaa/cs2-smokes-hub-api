@@ -67,7 +67,8 @@ describe('JwtStrategy', () => {
 
       const result = await strategy.validate(payload);
 
-      expect(result).toEqual(mockUser);
+      // validate() devolve o usuário com o `sub` do token anexado
+      expect(result).toEqual({ ...mockUser, sub: 1 });
       expect(prismaService.user.findUnique).toHaveBeenCalledWith({
         where: { id: 1 },
       });
